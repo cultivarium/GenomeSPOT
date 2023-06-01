@@ -1,8 +1,10 @@
-"""Helper functions used across modules."""
+"""General helper functions"""
 
 from collections import Counter
 from itertools import groupby
 from typing import IO, Tuple
+
+import numpy as np
 
 def fasta_iter(fasta_file : IO) -> Tuple[str, str]:
     """Iterable yielding FASTA header and sequence
@@ -34,3 +36,28 @@ def count_kmers(sequence : str, k : int) -> dict:
     """
     kmers_count = Counter([sequence[i:i+k] for i in range(len(sequence) - k + 1)])
     return dict(kmers_count)
+
+def nonnull(list_ : list):
+    """Returns array without NaN values"""
+    X = np.array(list_)
+    return X[~np.isnan(X)]
+
+def bin_midpoints(data : np.array, bins: np.array):
+    """Returns counts per bin keyed by bin midpoint"""
+    bin_counts = []
+    bin_midpoints = []
+    counts = Counter(np.digitize(data, bins))
+    for bin_idx in range(len(bins) - 1):
+        bin_counts.append(counts.get(bin_idx, 0))
+        bin_midpoints.append(round(np.mean([bins[bin_idx], bins[bin_idx + 1]]), 3))
+    return dict(zip(bin_midpoints, bin_counts))
+
+def onehot_range(arr, min_bin : float, max_bin : float, step : float) -> dict:
+    """Returns a dictionary of presence or absence in a bin"""
+    onehot_dict = {}
+    for bin_floor in np.arange(min_bin, max_bin, step):
+        if min(arr, default=-1000) <= bin_floor <= max(arr, default=-1000):
+            onehot_dict[str(bin_floor)] = 1
+        else:
+            onehot_dict[str(bin_floor)] = 0
+    return onehot_dict

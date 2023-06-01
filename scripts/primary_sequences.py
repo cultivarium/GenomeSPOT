@@ -19,24 +19,13 @@ Typical usage:
     kmer_freqs = DNA.count_canonical_kmers(k=1) # k-mer frequency
 """
 
-import argparse
-from collections import Counter, defaultdict
-from glob import glob
-from itertools import chain, product
-import json
-import logging
-import multiprocessing
-from pathlib import Path
-import subprocess
+from collections import defaultdict
+from itertools import product
 
 from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import numpy as np
 
-from helpers import fasta_iter, count_kmers
-
-logger = multiprocessing.log_to_stderr()
-logger.setLevel(logging.INFO)
+from helpers import count_kmers
 
 class Protein():
     """Calculations on a protein sequence.
@@ -169,6 +158,7 @@ class Protein():
             'nh2o' : self.nh2o(),
             'gravy' : self.gravy(),
             'thermostable_freq' : self.thermostable_freq(),
+            'length' : self.length,
             }
         sequence_metrics.update(self.aa_1mer_frequencies()) # 20
         sequence_metrics.update(self.aa_2mer_frequencies()) # 400
@@ -260,6 +250,7 @@ class DNA():
 
         sequence_metrics = {
             'pur_pyr_transition_freq' : self.purine_pyrimidine_transition_freq(),
+            'length' : self.length,
             }
         sequence_metrics.update(self.nt_1mer_frequencies()) # 4
         sequence_metrics.update(self.nt_2mer_frequencies()) # 16

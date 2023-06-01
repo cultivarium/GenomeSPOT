@@ -5,5 +5,4 @@ Install/download dependencies:
 
 ```shell
 pip install -r requirements.txt
-docker pull bolognabiocomp/deepsig
 ```

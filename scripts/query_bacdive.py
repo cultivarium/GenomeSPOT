@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+"""Queries BacDive API
+
+Provides information for all strains up to the highest provided strain ID. Typical 
+usage is run as a script (runtime: about 1 sec per 100 entries):
+
+```shell
+python3 src/query_bacdive.py -c .bacdive_credentials -max 171000 \
+        -o bacdive_data.json
+```
+"""
+
 import argparse
 import json
 import logging
@@ -11,24 +22,22 @@ def scrape_bacdive_api(
         credentials_file : str,
         max_bacdive_id : int,
         min_bacdive_id : int = 0,
-        ):
-    """
-    **BEFORE USING**: For the BacDive team's sanity,
-    please check to see if they have since made a simple way to
-    download all data e.g. by FTP.
-    
-    Downloads all strain data on the BacDive API by querying
-    all BacDive IDs from 0 to the highest ID available, which 
+        ) -> dict:
+    """Downloads all strain data on the BacDive API.
+
+    Queries all BacDive IDs from 0 to the highest ID available, which 
     as of 2023-03 was about 171000. IDs appear to be sequential.
 
-    :param credentials_file: str
-        Filepath to file with BacDive API credentials. See function
-        `load_credentials`
-    :param min_bacdive_id: int
-        Minimum BacDive ID, default of 0 instead of 1 for readability
-    :param max_bacdive_id: int
-        Highest BacDive ID to query. Set above the highest 
-        available ID. See function `find_highest_bacdive_id`
+    Args: 
+        credentials_file: Filepath to file with BacDive API credentials. 
+            See function`load_credentials`
+        min_bacdive_id: Minimum BacDive ID, default of 0 instead of 1 
+            for readability
+        max_bacdive_id: Highest BacDive ID to query. Set above the highest 
+            available ID. See function `find_highest_bacdive_id`
+
+    Returns:
+        results: Dictionary keyed by BacDive ID
     """
 
     username, password = load_credentials(credentials_file)
@@ -52,14 +61,18 @@ def paginated_query(
         query_type : str,
         query_list : list) -> dict:
 
-    """
-    Returns a dictionary keyed by BacDive ID.
+    """ Returns a dictionary keyed by BacDive ID.
 
     The BacDive API limits to 100 queries per API call. This
     function chunks out a query accordingly.
 
+    Args:
+        client: bacdive.BacdiveClient object
+        query_type: Query type for API
+        query_list: Specific list of queries within a type
 
-
+    Returns:
+        results: Dictionary keyed by BacDive ID
     """
     results = {}
     chunk_size = 100 # BacDive API call limit
@@ -81,12 +94,19 @@ def paginated_query(
     return results
 
 def load_credentials(filepath : str) -> Tuple[str, str]:
-    """
-    Loads secret credentials from file in format:
-    ```
-    username
-    password
-    ```
+    """Loads secret credentials from file.
+    
+    Required file format:
+        ```
+        username
+        password
+        ```
+
+    Args:
+        filepath: Path to secret credentials file
+
+    Returns:
+        username, password: Tuple of username and password
     """
     with open(filepath) as fh:
         username = fh.readline().strip()

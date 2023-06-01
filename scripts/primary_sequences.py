@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
 
+"""Classes to compute info about primary sequences.
+
+One class is for proteins, the other for nucleotides. Information about
+primary sequences refers to what can be learned from a sequence alone
+independent of the gene's function or secondary or tertiary structure.
+Examples include nucleotide frequency and the proportion of residues
+that are acidic.
+
+Typical usage:
+
+    protein_calc = Protein(protein_sequence)
+    protein_metrics = protein_calc.protein_metrics() # all metrics
+    pi = protein_calc.isoelectric_point() # individual metric
+
+    dna_calc = DNA(dna)
+    dna_metrics = DNA.nucleotide_metrics() # all metrics
+    kmer_freqs = DNA.count_canonical_kmers(k=1) # k-mer frequency
+"""
+
 import argparse
 from collections import Counter, defaultdict
 from glob import glob
@@ -14,15 +33,29 @@ from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import numpy as np
 
-from utils import fasta_iter
+from helpers import fasta_iter, count_kmers
 
 logger = multiprocessing.log_to_stderr()
 logger.setLevel(logging.INFO)
 
 class Protein():
+    """Calculations on a protein sequence.
+    
+    When counting amino acid frequencies, the initial
+    Met amino acid (assumed to be present) is removed
+    so that changes in protein length do not affect amino
+    acid frequencies - e.g. shorter proteins incease Met
+    frequency.
+
+    Typical usage:
+    ```
+    protein_metrics = Protein(protein_sequence).protein_metrics()
+    ```
+    """
 
     STANDARD_AMINO_ACIDS = {'A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y'}
 
+    # citation: 
     NH2O_RQEC = {
         'A' : 0.369, 'C' : -0.025, 'D' : -0.122, 
         'E' : -0.107, 'F' : -2.568, 'G' : 0.478, 
@@ -33,6 +66,7 @@ class Protein():
         'W' : -4.087, 'Y' : -2.499
         }
 
+    # citation: 
     WEIGHTED_ZC = {
         'A': 0, 'C': 2.0, 'D': 4,
         'E': 2.0, 'F': -4.0, 'G': 2,
@@ -43,6 +77,7 @@ class Protein():
         'W': -2.0, 'Y': -2.0
         }
     
+    # citation: 
     HYDROPHOBICITY = {
         'A': 1.8, 'R': -4.5, 'N': -3.5,
         'D': -3.5, 'C': 2.5, 'Q': -3.5,
@@ -52,40 +87,42 @@ class Protein():
         'S': -0.8, 'T': -0.7, 'W': -0.9,
         'Y': -1.3,'V': 4.2
         }
-
+    
+    THERMOSTABLE_RESIDUES = {'I', 'V', 'Y', 'W', 'R', 'E', 'L'}
 
     def __init__(self, protein_sequence : str):
         """
-        :param protein_sequence: str
-            Amino acid sequence of one protein
+        Args:
+            protein_sequence: Amino acid sequence of one protein
         """
         self.sequence =  self._format_protein_sequence(protein_sequence)
         self.length = len(self.sequence)
+        self._aa_1mer_frequencies = None
+        self._aa_2mer_frequencies = None
 
     def _format_protein_sequence(self, protein_sequence : str) -> str:
         """Returns a formatted amino acid sequence"""
         return ''.join([aa for aa in protein_sequence.strip().upper() if aa in self.STANDARD_AMINO_ACIDS])
 
-    def _sequence_weighted_average(self, dict_ : dict):
-        """Sums values in a dictionary and divides by sequence length"""
-        return sum([dict_[s] for s in self.sequence]) / self.length
+    def aa_1mer_frequencies(self) -> dict:
+        """Returns count of every amino acid ignoring start methionine"""
+        if self._aa_1mer_frequencies is None:
+            if self.length > 1:
+                self._aa_1mer_frequencies = {k : float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=1)}
+            else:
+                self._aa_1mer_frequencies = {}
+        return self._aa_1mer_frequencies
 
-    def aa_frequencies(self) -> dict:
-        """Returns count of every amino acid """
-        return dict(Counter([aa for aa in self.sequence]))
-
-    def fraction_thermostable_ivywrel(self) -> float:
-        """
-        Thermostable residues reported by: 
-        # https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.0030005
-        """
-        if self.length > 0:
-            thermostable_length = len([aa for aa in self.sequence if aa in {'I', 'V', 'Y', 'W', 'R', 'E', 'L'}])
-            return thermostable_length / self.length
-        else:
-            return np.nan
-        
-    def isoelectric_point(self) -> float:
+    def aa_2mer_frequencies(self) -> dict:
+        """Returns count of every amino acid ignoring start methionine"""
+        if self._aa_2mer_frequencies is None:
+            if self.length > 1:
+                self._aa_2mer_frequencies = {k : float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=2)}
+            else:
+                self._aa_2mer_frequencies = {}
+        return self._aa_2mer_frequencies
+            
+    def pi(self) -> float:
         """Compute the isoelectric point (pI) of the protein"""
         if self.length > 0:
             # to-do: remove unnecessary Biopython dependency
@@ -94,147 +131,83 @@ class Protein():
             return np.nan
         
     def gravy(self):
-        """Compute the Grand Average of Hydropathy (GRAVY)"""
+        """Compute the hydrophobicity as the 
+        Grand Average of Hydropathy (GRAVY)
+        """
         if self.length > 0:
             return np.mean([self.HYDROPHOBICITY[aa] for aa in self.sequence])
         else:
             return np.nan
         
     def zc(self) -> float:
-        """
-        Computes average carbon oxidation state (Zc) of a 
+        """Computes average carbon oxidation state (Zc) of a 
         protein based on a dictionary of amino acids.
         """
-        return self._sequence_weighted_average(dict_=self.WEIGHTED_ZC)
+        return sum([self.WEIGHTED_ZC[s] for s in self.sequence]) / self.length
 
     def nh2o(self) -> float:
-        """
-        Computes  stoichiometric hydration state (nH2O) of a 
+        """Computes stoichiometric hydration state (nH2O) of a 
         protein based on a dictionary of amino acids.
         """
-        return self._sequence_weighted_average(dict_=self.NH2O_RQEC)
+        return sum([self.NH2O_RQEC[s] for s in self.sequence]) / self.length
 
-    def is_soluble_extracellular_heuristic(self) -> bool: 
+    def thermostable_freq(self) -> float:
+        """Thermostable residues reported by: 
+        https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.0030005
         """
-        Sec and Tat signal peptides are N-terminal sequences with a
-        hydrophobic region. This function applies a heuristic for 
-        the signal peptides: a region of high hydrophobicity at the 
-        start protein sequence, optionally with an additional motif. 
-        Sec signals are more hypophobic and Tat signals have a consensus
-        motif of [S/T]RRxFLK.
-
-        Compared to Signalp6, this heuristic is far, far faster. A
-        downside is that, while it returns the majority of
-        extracellular soluble proteins, it also returns about the
-        same number of false positives. Therefore while this can be used to enrich
-        for proteins that are extracellular and soluble, each protein only has
-        a ~50% chance of being extracellular.
-        """
-
-        # Measure protein and N-terminal region
-        max_signal_hydrophobicity = self.find_max_hydrophobicity(l_substring=8, l_peptide=35)
-        max_tat_score = self.find_max_tat_motif_score(l_peptide=30)
-        protein_hyprophob = self.gravy()
-        
-        # Score
-        # Thresholds determined empirically but roughly
-        threshold_hydrophob_soluble = 0 
-        threshold_hydrophob_sec = 2.8
-        threshold_hydrophob_tat = 1
-        threshold_tat_score = 8.5
-        if protein_hyprophob < threshold_hydrophob_soluble:
-            if max_tat_score >= threshold_tat_score and max_signal_hydrophobicity >= threshold_hydrophob_tat:
-                return True
-            elif max_signal_hydrophobicity >= threshold_hydrophob_sec:
-                return True
-        return False
-
-    def tat_motif_score(self, subsequence):
-        """
-        Heuristic to quickly score whether a TAT motif is present.
-        Each position receives a score if an expected residue is
-        present. Scores are based on consensus sequence motifs. Local
-        alignment would be a more flexible improvement.
-        """
-        # Determined by eyeballing motifs
-        position_scores = {
-            0 : {'S' : 1.5, 'T' : 1.5},
-            1 : {'R' : 4},
-            2 : {'R' : 4},
-            3 : {},
-            4 : {'F' : 2, 'V' : 0.5, 'L' : 1},
-            5 : {'L' : 3, 'V' : 0.5, 'I' : 0.5},
-            6 : {'K' : 0.5}
-        }
-        score = 0
-        for i, score_dict in position_scores.items():
-            score += score_dict.get(subsequence[i], 0)
-        return score
-
-    def find_max_tat_motif_score(self, l_peptide : int = 30):
-        """
-        Scans the n-terminal region of a protein plausibly part of a 
-        signal peptide and returns the maximum tat score within that region.
-        """
-        max_score = 0
-        l_substring = 7
-        for i in range(min([len(self.sequence) - l_substring + 1, l_peptide])):
-            region = self.sequence[i:(i + l_substring)]
-            region_score = self.tat_motif_score(region)
-            if region_score >= max_score:
-                max_score = region_score
-        return max_score
-
-    def find_max_hydrophobicity(self, l_substring : int = 10, l_peptide : int = 40):
-        """
-        Scans the n-terminal region of a protein plausibly part of a 
-        signal peptide and returns the maximum hydrophobicity of a subsequence.
-        """
-        max_hydrophobicity = -999999 # nonsensical
-        
-        hydrophobicities = [self.HYDROPHOBICITY[aa] for aa in self.sequence]
-        for i in range(min([len(hydrophobicities) - l_substring + 1, l_peptide])):
-            region = hydrophobicities[i:(i + l_substring)]
-            region_hydrophobicity = np.mean(region)
-            if region_hydrophobicity >= max_hydrophobicity:
-                max_hydrophobicity = region_hydrophobicity
-
-        return max_hydrophobicity
-
-class Nucleotide():
-
-    def __init__(self, nucleotide : str):
-        """
-        :param nucleotide_sequence: str
-            Nucleotide sequence
-        :param k: int
-            Length of k-mer to count
-        """
-        self.sequence =  nucleotide
-        self.length = len(self.sequence)
+        if self.length > 0:
+            return  sum([v for k, v in self.aa_1mer_frequencies() if k in self.THERMOSTABLE_RESIDUES])
+        else:
+            return np.nan
     
-    def count_canonical_kmers(self, k : int =2) -> dict:
-        """
-        Returns counts for canonical k-mers only, e.g. 'AA' records
-        counts for both 'AA' and its reverse complement 'TT'.
-        """
-        kmers_count = self.count_kmers(k)
-        
-        canonical_kmers_dict = self.make_canonical_kmers_dict(k)
-        canonical_kmers_count = defaultdict(int)
-        for kmer, count in kmers_count.items():
-            canonical_kmer = canonical_kmers_dict.get(kmer, None)
-            canonical_kmers_count[canonical_kmer] += count
-        return dict(canonical_kmers_count)
+    def protein_metrics(self) -> dict:
+        """Computes a dictionary with all metrics for a protein"""
 
-    def count_kmers(self, k : int =2) -> dict:
-        """Returns count for each k-mer at specific k"""
-        kmers_count = Counter([self.sequence[i:i+k] for i in range(len(self.sequence) - k + 1)])
-        return dict(kmers_count)
-         
-    def make_canonical_kmers_dict(self, k : int=2):
+        sequence_metrics = {
+            'pi' : self.pi(),
+            'zc' : self.zc(),
+            'nh2o' : self.nh2o(),
+            'gravy' : self.gravy(),
+            'thermostable_freq' : self.thermostable_freq(),
+            }
+        sequence_metrics.update(self.aa_1mer_frequencies()) # 20
+        sequence_metrics.update(self.aa_2mer_frequencies()) # 400
+
+        return sequence_metrics
+
+class DNA():
+    """Calculations on a DNA sequence.
+    
+    Typical usage:
+    ```
+    dna_metrics = DNA(dna).nucleotide_metrics()
+    ```
+    """
+
+    BASE_TYPE = {
+        'C' : 'Y', 
+        'T' : 'Y', 
+        'A' : 'R', 
+        'G' : 'R'
+        }
+
+    def __init__(self, dna : str):
         """
-        Creates a dictionary that where a k-mer and its reverse
+        Args:
+            dna: A DNA sequence, gene or genome
+        """
+        self.sequence =  dna
+        self.length = len(self.sequence)
+        self._nt_1mer_frequencies = None
+        self._nt_2mer_frequencies = None
+    
+    def reverse_complement(self, sequence):
+        """Returns the reverse complement of a DNA sequence"""
+        complement = {'A' : 'T', 'T' : 'A', 'C' : 'G', 'G' : 'C', 'N' : 'N'}
+        return ''.join([complement.get(nt, '') for nt in sequence[::-1]])
+
+    def make_canonical_kmers_dict(self, k : int):
+        """Creates a dictionary that where a k-mer and its reverse
         complement k-mer are keys, and the k-mer is the value, for
         all k-mers at a given k. E.g.: {'AA' : 'TT', 'AA' : 'AA'}
         """
@@ -246,8 +219,50 @@ class Nucleotide():
                 canonical_kmers_dict[self.reverse_complement(kmer)] = kmer
         return canonical_kmers_dict
 
-    def reverse_complement(self, sequence):
-        complement = {'A' : 'T', 'T' : 'A', 'C' : 'G', 'G' : 'C', 'N' : 'N'}
-        return ''.join([complement.get(nt, '') for nt in sequence[::-1]])
+    def count_canonical_kmers(self, k : int) -> dict:
+        """Returns counts for canonical k-mers only, e.g. 'AA' records
+        counts for both 'AA' and its reverse complement 'TT'. Canonical
+        is determined by lexicographic order.
+        """
+        kmers_count = count_kmers(k)
+        
+        canonical_kmers_dict = self.make_canonical_kmers_dict(k)
+        canonical_kmers_count = defaultdict(int)
+        for kmer, count in kmers_count.items():
+            canonical_kmer = canonical_kmers_dict.get(kmer, None)
+            canonical_kmers_count[canonical_kmer] += count
+        return dict(canonical_kmers_count)
 
+    def nt_1mer_frequencies(self) -> dict:
+        """Count frequencies of canonical 1-mers"""
+        if self._nt_1mer_frequencies is None:
+            self._nt_1mer_frequencies = self.count_canonical_kmers(k=1)
+        return self._nt_1mer_frequencies
 
+    def nt_2mer_frequencies(self) -> dict:
+        """Count frequencies of canonical 2-mers"""
+        if self._nt_2mer_frequencies is None:
+            self._nt_2mer_frequencies = self.count_canonical_kmers(k=2)
+        return self._nt_2mer_frequencies
+    
+    def purine_pyrimidine_transition_freq(self) -> float:
+        """Frequency of purine-pyrimidine transitions. An example 
+        transition is AT, which is purine (R) to pyrimidine (Y).
+        """
+        transition_frequency = 0
+        for sequence, freq in self.nt_2mer_frequencies():
+            if self.BASE_TYPE[sequence[0]] != self.BASE_TYPE[sequence[1]]:
+                transition_frequency += freq
+        return transition_frequency
+
+    def nucleotide_metrics(self) -> dict:
+        """Computes a dictionary with all metrics for a DNA sequence"""
+
+        sequence_metrics = {
+            'pur_pyr_transition_freq' : self.purine_pyrimidine_transition_freq(),
+            }
+        sequence_metrics.update(self.nt_1mer_frequencies()) # 4
+        sequence_metrics.update(self.nt_2mer_frequencies()) # 16
+
+        return sequence_metrics
+    

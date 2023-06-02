@@ -253,7 +253,7 @@ class DNA():
             if self.BASE_TYPE[sequence[0]] != self.BASE_TYPE[sequence[1]]:
                 transition_frequency += freq
 
-        return transition_frequency
+        return float(transition_frequency)
 
     def nucleotide_metrics(self) -> dict:
         """Computes a dictionary with all metrics for a DNA sequence"""
@@ -265,7 +265,7 @@ class DNA():
         
         # Must prepend with "nt_" because code overlaps with aas
         for nt, count in self.nt_1mer_frequencies().items(): # 2 variables
-            sequence_metrics['nt_{}'.format(nt)] = count
+            sequence_metrics['nt_{}'.format(nt)] = float(count)
         
         return sequence_metrics
     

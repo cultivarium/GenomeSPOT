@@ -19,17 +19,9 @@ class Genome():
         self.faa_filepath = str(protein_filepath)
         self.fna_filepath = str(contig_filepath)
         self.prefix = '.'.join(self.faa_filepath.split('/')[-1].split('.')[:-1])
-        self.protein_statistics = None
-
-    def _length_weighted(self, statistics_lists : dict, property : str) -> float:
-        sum_ = np.sum(nonnull([f * l for f, l in zip(statistics_lists[property], statistics_lists['length'])]))
-        sum_weights = np.sum(nonnull(statistics_lists['length']))
-        if sum_weights > 0:
-            return sum_ / sum_weights
-        else:
-            return np.nan
+        self._protein_data = None
     
-    def measure_protein_statistics(self):
+    def protein_data(self):
         """
         Returns a dictionary of properties for each protein.
 
@@ -37,73 +29,79 @@ class Genome():
         to be computed jointly with multiple values, such as weighting
         a statistic by protein length.
         """
-        if self.protein_statistics is None:
-            self.protein_statistics = {}
+        if self._protein_data is None:
+            self._protein_data = {}
             with open(self.faa_filepath, 'r') as fh:
                 for header, sequence in fasta_iter(fh):
                     protein_id = header.split(' ')[0]
-                    protein_calc = Protein(sequence)
-                    self.protein_statistics[protein_id] = protein_calc.protein_metrics()
+                    self._protein_data[protein_id] = Protein(sequence).protein_metrics()
                     
-        return self.protein_statistics
+        return self._protein_data
 
-    def compute_proteome_statistics(self, subset_proteins : set=None) -> dict:
+    def compute_protein_statistics(self, subset_proteins : set=None) -> dict:
         """
         Returns a dictionary of genome-wide statistics, based on 
         measurements, to be used for downstream analyses
         """
-        proteome_statistics = {}
+        protein_statistics = {}
 
         if subset_proteins:
-            protein_statistics_dict = {k : self.measure_protein_statistics()[k] for k in subset_proteins}
+            values_by_protein = {k : self.protein_data()[k] for k in subset_proteins}
         else:
-            protein_statistics_dict = self.measure_protein_statistics()
+            values_by_protein = self.protein_data()
         
-        statistics_lists = defaultdict(list)
-        for protein, stats in protein_statistics_dict.items():
+        values_dict = defaultdict(list)
+        for protein, stats in values_by_protein.items():
             for key, value in stats.items():
-                statistics_lists[key].append(value)
+                if value:
+                    values_dict[key].append(value)
 
-        # distributions / frequencies
-        pis = nonnull(statistics_lists['pi'])
-        proteome_statistics['histogram_pi'] = bin_midpoints(pis, bins=np.linspace(0, 14, 141))
-        proteome_statistics['ratio_acidic_pis'] = len(pis[pis < 7]) / len(pis[pis >= 7])
-        for aa, count in Counter(chain(*statistics_lists['aa_frequencies'])).items():
-            proteome_statistics[f'aa_{aa.lower()}'] = count
+        protein_statistics['sum_protein_length'] = np.sum(values_dict['length'])
+
+        # amino acid k-mer frequencies
+        for variable, values in values_dict.items():
+            if variable.startswith('aa_'):
+                protein_statistics['mean_{}'.format(variable)] = np.mean(values)
+
+        # distributions
+        pis = np.array(values_dict['pi'])
+        protein_statistics['pis_acidic'] = np.sum((pis < 5.5)) / len(pis)
+        protein_statistics['pis_neutral'] = np.sum(((pis >= 5.5) & (pis < 8.5))) / len(pis)
+        protein_statistics['pis_basic'] =  np.sum((pis >= 8.5)) / len(pis)
 
         # means
-        proteome_statistics['mean_protein_length'] = np.mean(nonnull(statistics_lists['length']))
-        proteome_statistics['mean_pi'] = np.mean(pis)
-        proteome_statistics['mean_gravy'] = np.mean(nonnull(statistics_lists['gravy']))
-        proteome_statistics['mean_zc'] = np.mean(nonnull(statistics_lists['zc']))
-        proteome_statistics['mean_nh2o'] = np.mean(nonnull(statistics_lists['nh2o']))
-        proteome_statistics['mean_f_ivywrel'] = np.mean(nonnull(statistics_lists['f_ivywrel']))
+        protein_statistics['mean_pi'] = np.mean(pis)
+        protein_statistics['mean_gravy'] = np.mean(values_dict['gravy'])
+        protein_statistics['mean_zc'] = np.mean(values_dict['zc'])
+        protein_statistics['mean_nh2o'] = np.mean(values_dict['nh2o'])
+        protein_statistics['mean_thermostable_freq'] = np.mean(values_dict['thermostable_freq'])
+        protein_statistics['mean_protein_length'] = np.mean(values_dict['length'])
 
-        # weighted means
-        proteome_statistics['weighted_mean_f_ivywrel'] = self._length_weighted(statistics_lists, 'f_ivywrel')
-        proteome_statistics['weighted_mean_zc'] = self._length_weighted(statistics_lists, 'zc')
-        proteome_statistics['weighted_mean_nh2o'] = self._length_weighted(statistics_lists, 'nh2o')
-        proteome_statistics['weighted_mean_gravy'] = self._length_weighted(statistics_lists, 'gravy')
+        # ratios and proportion
+        arg = protein_statistics.get('mean_aa_R', 0.) 
+        lys = protein_statistics.get('mean_aa_K', 0.)
+        if arg + lys > 0:
+            protein_statistics['proportion_R_RK'] = arg / (arg + lys)
 
-        return proteome_statistics
+        return protein_statistics
 
 
     def _call_signal_pred(self):
         #
-        return
+        return {}
 
     def identify_protein_localization(self):
 
         # run signal pred
         self._call_signal_pred()
-        
+
         # get hydrophobicity
 
         # assign localization: intra soluble, membrane, extra soluble
 
-        return 
+        return {}
 
-    def compute_genome_statistics(self):
+    def compute_dna_statistics(self):
         """Returns a dictionary of genome-wide statistics on nucleotide
         content, currently only k-mer counts
         """
@@ -112,13 +110,12 @@ class Genome():
             genome = ''
             for header, sequence in fasta_iter(fh):
                 genome += 'NN' + sequence
-                nucleotide_calc = DNA(genome)
-                genome_statistics.update(nucleotide_calc.count_canonical_kmers(k=1))
-                genome_statistics.update(nucleotide_calc.count_canonical_kmers(k=2))
 
+        nucleotide_calc = DNA(genome)
+        genome_statistics.update(nucleotide_calc.nucleotide_metrics())
         return genome_statistics
 
-    def collect_genomic_statistics(self) -> dict:
+    def genome_metrics(self) -> dict:
         """
         Computes statistics about the proteome for each genome on:
         1. All proteins, keyed by 'all'
@@ -131,14 +128,15 @@ class Genome():
         localization = self.identify_protein_localization()
         extracellular_soluble = {protein for protein, locale in localization.items() if locale == 'extra_soluble'}
         intracellular_soluble = {protein for protein, locale in localization.items() if locale == 'intra_soluble'}
-        
-        logging.info("{}: Collecting protein statistics".format(self.prefix))
-        self.genomic_statistics['all'] = self.compute_proteome_statistics()
-        self.genomic_statistics['intracellular_soluble'] = self.compute_proteome_statistics(subset_proteins=intracellular_soluble)
-        self.genomic_statistics['extracellular_soluble'] = self.compute_proteome_statistics(subset_proteins=extracellular_soluble)
 
         logging.info("{}: Collecting genome statistics".format(self.prefix))
-        self.genomic_statistics['all'].update(self.compute_genome_statistics())
+        self.genomic_statistics['all'] = self.compute_dna_statistics()
+
+        logging.info("{}: Collecting protein statistics".format(self.prefix))
+        self.genomic_statistics['all'].update(self.compute_protein_statistics())
+        self.genomic_statistics['extracellular_soluble'] = self.compute_protein_statistics(subset_proteins=extracellular_soluble)
+        self.genomic_statistics['intracellular_soluble'] = self.compute_protein_statistics(subset_proteins=intracellular_soluble)
+        self.genomic_statistics['all']['protein_coding_density']  = 3 * self.genomic_statistics['all']['sum_protein_length'] / self.genomic_statistics['all']['nt_length']
 
         return self.genomic_statistics
 
@@ -153,7 +151,7 @@ if __name__ == "__main__":
                     description='Computes statistics from a genome'
                     )
     
-    parser.add_argument('-c', '--contigs' help="Path to a genome's contigs in FASTA format")
+    parser.add_argument('-c', '--contigs', help="Path to a genome's contigs in FASTA format")
     parser.add_argument('-p', '--proteins', help="Path to a genome's proteins in FASTA format")
     parser.add_argument('-o', '--output', help='Output file name, default <genome_prefix>.json')
 

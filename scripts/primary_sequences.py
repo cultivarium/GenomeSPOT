@@ -97,7 +97,7 @@ class Protein():
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_1mer_frequencies is None:
             if self.length > 1:
-                self._aa_1mer_frequencies = {k : float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=1)}
+                self._aa_1mer_frequencies = {k : float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=1).items()}
             else:
                 self._aa_1mer_frequencies = {}
         return self._aa_1mer_frequencies
@@ -106,7 +106,7 @@ class Protein():
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_2mer_frequencies is None:
             if self.length > 1:
-                self._aa_2mer_frequencies = {k : float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=2)}
+                self._aa_2mer_frequencies = {k : float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=2).items()}
             else:
                 self._aa_2mer_frequencies = {}
         return self._aa_2mer_frequencies
@@ -145,7 +145,7 @@ class Protein():
         https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.0030005
         """
         if self.length > 0:
-            return  sum([v for k, v in self.aa_1mer_frequencies() if k in self.THERMOSTABLE_RESIDUES])
+            return  sum([v for k, v in self.aa_1mer_frequencies().items() if k in self.THERMOSTABLE_RESIDUES])
         else:
             return np.nan
     
@@ -160,8 +160,12 @@ class Protein():
             'thermostable_freq' : self.thermostable_freq(),
             'length' : self.length,
             }
-        sequence_metrics.update(self.aa_1mer_frequencies()) # 20
-        sequence_metrics.update(self.aa_2mer_frequencies()) # 400
+        
+        # Must prepend with "aa_" because code overlaps with nts
+        for aa, count in self.aa_1mer_frequencies().items(): # 20 variables
+            sequence_metrics['aa_{}'.format(aa)] = count
+        for aa, count in self.aa_2mer_frequencies().items(): # 400 variables
+            sequence_metrics['aa_{}'.format(aa)] = count
 
         return sequence_metrics
 
@@ -214,25 +218,30 @@ class DNA():
         counts for both 'AA' and its reverse complement 'TT'. Canonical
         is determined by lexicographic order.
         """
-        kmers_count = count_kmers(k)
+        kmers_count = count_kmers(self.sequence, k)
         
         canonical_kmers_dict = self.make_canonical_kmers_dict(k)
         canonical_kmers_count = defaultdict(int)
         for kmer, count in kmers_count.items():
             canonical_kmer = canonical_kmers_dict.get(kmer, None)
-            canonical_kmers_count[canonical_kmer] += count
+            if canonical_kmer is not None:
+                canonical_kmers_count[canonical_kmer] += count
         return dict(canonical_kmers_count)
 
     def nt_1mer_frequencies(self) -> dict:
         """Count frequencies of canonical 1-mers"""
         if self._nt_1mer_frequencies is None:
-            self._nt_1mer_frequencies = self.count_canonical_kmers(k=1)
+            kmers_count = self.count_canonical_kmers(k=1)
+            n_kmers = sum(kmers_count.values())
+            self._nt_1mer_frequencies = {k : float(v / n_kmers) for k, v in kmers_count.items()}
         return self._nt_1mer_frequencies
 
     def nt_2mer_frequencies(self) -> dict:
         """Count frequencies of canonical 2-mers"""
         if self._nt_2mer_frequencies is None:
-            self._nt_2mer_frequencies = self.count_canonical_kmers(k=2)
+            kmers_count = self.count_canonical_kmers(k=2)
+            n_kmers = sum(kmers_count.values())
+            self._nt_2mer_frequencies = {k : float(v / n_kmers) for k, v in kmers_count.items()}
         return self._nt_2mer_frequencies
     
     def purine_pyrimidine_transition_freq(self) -> float:
@@ -240,20 +249,23 @@ class DNA():
         transition is AT, which is purine (R) to pyrimidine (Y).
         """
         transition_frequency = 0
-        for sequence, freq in self.nt_2mer_frequencies():
+        for sequence, freq in self.nt_2mer_frequencies().items():
             if self.BASE_TYPE[sequence[0]] != self.BASE_TYPE[sequence[1]]:
                 transition_frequency += freq
+
         return transition_frequency
 
     def nucleotide_metrics(self) -> dict:
         """Computes a dictionary with all metrics for a DNA sequence"""
 
         sequence_metrics = {
+            'nt_length' : self.length,
             'pur_pyr_transition_freq' : self.purine_pyrimidine_transition_freq(),
-            'length' : self.length,
             }
-        sequence_metrics.update(self.nt_1mer_frequencies()) # 4
-        sequence_metrics.update(self.nt_2mer_frequencies()) # 16
-
+        
+        # Must prepend with "nt_" because code overlaps with aas
+        for nt, count in self.nt_1mer_frequencies().items(): # 2 variables
+            sequence_metrics['nt_{}'.format(nt)] = count
+        
         return sequence_metrics
     

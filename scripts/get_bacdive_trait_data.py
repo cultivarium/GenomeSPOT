@@ -48,7 +48,7 @@ class QueryBacDive():
         self.username, self.password = self.load_credentials(credentials_filepath)
         self.min_bacdive_id = min_bacdive_id
         self.max_bacdive_id = max_bacdive_id
-        self.query_list = list(range(self.min_bacdive_id, self.max_bacdive_id))
+        self.query_list = list(range(self.min_bacdive_id, self.max_bacdive_id, 1))
 
     def load_credentials(self, filepath : str) -> Tuple[str, str]:
         """Loads secret credentials from file.
@@ -82,9 +82,6 @@ class QueryBacDive():
                     client=client,
                     query_type ='id',
                     )
-        
-        del username
-        del password
 
         return results
 
@@ -107,7 +104,7 @@ class QueryBacDive():
         """
         results = {}
         chunk_size = 100 # BacDive API call limit
-        chunks = round(len(self.query_list)/chunk_size)
+        chunks = max([1, round(len(self.query_list)/chunk_size)])
         logging.info('Iniating {} queries in {} chunks'.format(len(self.query_list), chunks))
         for n_split in range(chunks):
             
@@ -125,7 +122,7 @@ class QueryBacDive():
         return results
 
 
-class BacDiveData():
+class ComputeBacDiveTraits():
     """
     Parses BacDive API output to return reported information
     
@@ -366,16 +363,17 @@ class BacDiveData():
             'temperature_max' : max(self.reported_temperatures, default=None),
                    }
 
-        features.update(self._onehot_range(self.reported_salinities, 0, 38.4, 0.5, prefix='nacl')) # salinity range
-        features.update(self._onehot_range(self.reported_phs, 0, 14, 0.25, prefix='ph')) # pH range 
-        features.update(self._onehot_range(self.reported_temperatures, 0, 100, 1, prefix='temp')) # temperature range
+        # features.update(self._onehot_range(self.reported_salinities, 0, 38.4, 0.5, prefix='nacl')) # salinity range
+        # features.update(self._onehot_range(self.reported_phs, 0, 14, 0.25, prefix='ph')) # pH range 
+        # features.update(self._onehot_range(self.reported_temperatures, 0, 100, 1, prefix='temp')) # temperature range
         features.update(self.onehot_oxygen_tolerance(self.reported_oxygen_tolerances)) # o2 tolerance
 
         return features
     
 
 def get_bacdive_trait_data(output : str,
-                                      credentials_file : str ,
+                           bacdive_output : str,
+                                      credentials_filepath : str ,
                                       max_bacdive_id : int,
                                       min_bacdive_id : int = 0,
                                       bacdive_json : dict = None,
@@ -395,48 +393,51 @@ def get_bacdive_trait_data(output : str,
     """
     if bacdive_json is None:
         logging.info('Attempting to download data from BacDive API')
-        bacdive_query = QueryBacDive(credentials_file = credentials_file, 
+        bacdive_query = QueryBacDive(credentials_filepath = credentials_filepath, 
                                         max_bacdive_id=int(max_bacdive_id),
                                         min_bacdive_id=int(min_bacdive_id),
                                         )
 
         bacdive_dict = bacdive_query.scrape_bacdive_api()        
-        logging.info('Saving BacDive data to file: {}'.format(bacdive_json)) 
-        json.dump(bacdive_dict, open(bacdive_json, 'w'))
+        logging.info('Saving BacDive data to file: {}'.format(bacdive_output)) 
+        json.dump(bacdive_dict, open(bacdive_output, 'w'))
     else:
         logging.info('Data from BacDive API supplied by user') 
         bacdive_dict = json.loads(open(bacdive_json).read())
 
     # Compute trait data indexed by genome
     trait_dict = {}
-    for n, (strain_id, data) in enumerate(bacdive_dict.items()):
-        strain_traits = BacDiveData(data).compute_trait_data()
-        genome_accession = strain_traits.get('ncbi_accession', None)
-        if genome_accession:
-            trait_dict[genome_accession] = strain_traits
+    # for n, (strain_id, data) in enumerate(bacdive_dict.items()):
+    #     strain_traits = ComputeBacDiveTraits(data).compute_trait_data()
+    #     genome_accession = strain_traits.get('ncbi_accession', None)
+    #     if genome_accession:
+    #         trait_dict[genome_accession] = strain_traits
 
-    json.dump(trait_dict, open(output, 'w'))
+    # json.dump(trait_dict, open(output, 'w'))
     return trait_dict
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-                    prog='QueryBacdive',
-                    description='Scrapes BacDive API for all strain data'
+                    prog='GetBacDiveTraitData',
+                    description='Scrapes BacDive API for all strain data and computes traits'
                     )
     
     parser.add_argument('-c', '--credentials', help='File with BacDive credentials as: 1st line username, 2nd line password')
     parser.add_argument('-min', default=0, help='Lowest BacDive ID to query', required=False)
     parser.add_argument('-max', help='Highest BacDive ID to query')
-    parser.add_argument('-o', '--output', default='bacdive_data.json', help='Output JSON name')
+    parser.add_argument('-s', '--save-bacdive-download', default='bacdive_data.json', help='Optional: filepath to save raw BacDive data as JSON' , required=False)
+    parser.add_argument('-e', '--existing', default=None, help='Existing  BacDive data download')
+    parser.add_argument('-o', '--output', default='trait_data.json', help='Output JSON name')
+    
 
     args = parser.parse_args()
     logging.basicConfig(format="%(levelname)s:%(message)s", encoding='utf-8', level=logging.INFO)
     
     get_bacdive_trait_data(output=args.output, 
-                            credentials_file = args.credentials,
+                           bacdive_output=args.save_bacdive_download,
+                            credentials_filepath = args.credentials,
                             max_bacdive_id=int(args.max),
                             min_bacdive_id=int(args.min),
-                            output = args.output,
-                            bacdive_json = args.bacdive_json,
+                            bacdive_json = args.existing,
                             )

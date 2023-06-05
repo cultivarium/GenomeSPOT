@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
-from collections import Counter, defaultdict
-from itertools import chain
+from collections import defaultdict
+import gzip
+import io
 import json
 import logging
 from pathlib import Path
-import subprocess
 
 import numpy as np
 
@@ -31,7 +31,8 @@ class Genome():
         """
         if self._protein_data is None:
             self._protein_data = {}
-            with open(self.faa_filepath, 'r') as fh:
+            with io.TextIOWrapper(io.BufferedReader(gzip.open(self.faa_filepath, 'r'))) as fh:
+                #with open(self.faa_filepath, 'r') as fh:
                 for header, sequence in fasta_iter(fh):
                     protein_id = header.split(' ')[0]
                     self._protein_data[protein_id] = Protein(sequence).protein_metrics()
@@ -81,7 +82,7 @@ class Genome():
         # amino acid k-mer frequencies
         for variable, values in values_dict.items():
             if variable.startswith('aa_'):
-                protein_statistics['mean_{}'.format(variable)] = float(np.mean(values))
+                protein_statistics[variable] = float(np.mean(values))
 
         return protein_statistics
 
@@ -105,7 +106,8 @@ class Genome():
         content, currently only k-mer counts
         """
         genome_statistics = {}
-        with open(self.fna_filepath, 'r') as fh:
+        with io.TextIOWrapper(io.BufferedReader(gzip.open(self.fna_filepath, 'r'))) as fh:
+            # with open(self.fna_filepath, 'r') as fh:
             genome = ''
             for header, sequence in fasta_iter(fh):
                 genome += 'NN' + sequence
@@ -152,8 +154,8 @@ if __name__ == "__main__":
                     description='Computes statistics from a genome'
                     )
     
-    parser.add_argument('-c', '--contigs', help="Path to a genome's contigs in FASTA format")
-    parser.add_argument('-p', '--proteins', help="Path to a genome's proteins in FASTA format")
+    parser.add_argument('-c', '--contigs', help="Path to a gzipped FASTA of contigs")
+    parser.add_argument('-p', '--proteins', help="Path toa gzipped FASTA of proteins")
     parser.add_argument('-o', '--output', help='Output file name, default <genome_prefix>.json')
 
     args = parser.parse_args()

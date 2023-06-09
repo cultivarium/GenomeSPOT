@@ -77,7 +77,8 @@ class Protein():
         'Y': -1.3,'V': 4.2
         }
     
-    MEMBRANE_PROTEIN_HYDROPHOBICITY = 0
+    # Membrane protein GRAVY is usually >+0.5 the average GRAVY
+    DIFF_HYDROPHOBICITY_MEMBRANE = 0.5
 
     THERMOSTABLE_RESIDUES = {'I', 'V', 'Y', 'W', 'R', 'E', 'L'}
 

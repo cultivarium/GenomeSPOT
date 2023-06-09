@@ -77,6 +77,8 @@ class Protein():
         'Y': -1.3,'V': 4.2
         }
     
+    MEMBRANE_PROTEIN_HYDROPHOBICITY = 0
+
     THERMOSTABLE_RESIDUES = {'I', 'V', 'Y', 'W', 'R', 'E', 'L'}
 
     def __init__(self, protein_sequence : str):

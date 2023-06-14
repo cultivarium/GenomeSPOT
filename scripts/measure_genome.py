@@ -168,17 +168,19 @@ class Genome():
         
         if self._protein_localization is None:
             exported_proteins = _get_exported_proteins_with_deepsig(self.faa_filepath, self.organism_type)
-            mean_hydrophobicity = np.sum([v['gravy'] for k, v in self.protein_data().items() if v['gravy'] is not None])
+            self.exported_proteins = exported_proteins
+            mean_hydrophobicity = np.mean([v['gravy'] for k, v in self.protein_data().items() if v['gravy'] is not None])
 
             self._protein_localization = {}
             for protein in self.protein_data().keys():
-                if protein in exported_proteins:
-                    if (self.protein_data()[protein]['gravy'] - mean_hydrophobicity) >= Protein.DIFF_HYDROPHOBICITY_MEMBRANE:
-                        self._protein_localization[protein] = 'membrane'
-                    else:
+                hydrophobicity = self.protein_data()[protein]['gravy']
+                if (hydrophobicity - mean_hydrophobicity) >= Protein.DIFF_HYDROPHOBICITY_MEMBRANE:
+                    self._protein_localization[protein] = 'membrane'
+                else:                        
+                    if protein in exported_proteins:
                         self._protein_localization[protein] = 'extra_soluble'
-                else:
-                    self._protein_localization[protein] = 'intra_soluble'
+                    else:
+                        self._protein_localization[protein] = 'intra_soluble'
 
         return self._protein_localization
 
@@ -221,13 +223,13 @@ class Genome():
 
         logging.info("{}: Collecting protein statistics".format(self.prefix))
         self.genomic_statistics['all'].update(self.compute_protein_statistics())
+        self.genomic_statistics['all']['protein_coding_density']  = 3 * self.genomic_statistics['all']['total_protein_length'] / self.genomic_statistics['all']['nt_length']
         if extracellular_soluble:
             self.genomic_statistics['extracellular_soluble'] = self.compute_protein_statistics(subset_proteins=extracellular_soluble)
         if intracellular_soluble:
             self.genomic_statistics['intracellular_soluble'] = self.compute_protein_statistics(subset_proteins=intracellular_soluble)
         if membrane:
             self.genomic_statistics['membrane'] = self.compute_protein_statistics(subset_proteins=membrane)
-        self.genomic_statistics['all']['protein_coding_density']  = 3 * self.genomic_statistics['all']['total_protein_length'] / self.genomic_statistics['all']['nt_length']
 
         return self.genomic_statistics
 

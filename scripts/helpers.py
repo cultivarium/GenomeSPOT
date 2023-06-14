@@ -61,3 +61,44 @@ def onehot_range(arr, min_bin : float, max_bin : float, step : float) -> dict:
         else:
             onehot_dict[str(bin_floor)] = 0
     return onehot_dict
+
+
+def gtdb_taxonomy_to_dict(taxstring : str) -> dict:
+    """Convert GTDB taxstring to a dictionary.
+    
+    Args:
+        taxstring: A GTDB taxstring in the following format: 
+            d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;...
+    Returns:
+        taxonomy_dict: A dictionary is keyed by the following ranks: domain, phylum, class, 
+            order, family, genus, and species.
+    """
+    GTDB_ABBREV = {'d' : 'domain', 'p' : 'phylum', 'c' : 'class', 'o' : 'order', 'f' : 'family' , 'g' : 'genus', 's' : 'species'}
+    taxonomy_dict = {}    
+    for level in taxstring.strip().split(';'):
+        abbrev, taxon = level.split('__')
+        taxonomy_dict[GTDB_ABBREV[abbrev]] = taxon
+    return taxonomy_dict
+
+def gtdb_accession_to_ncbi(accession : str, 
+                           make_genbank : bool = True, 
+                           remove_version : bool = True) -> str:
+    """Convert GTDB 'accession' into NCBI accession.
+
+    Options allow different formats.
+
+    Args:
+        accession: GTDB accession e.g. RS_GCF_016456235.1
+        make_genbank: Replace the initial 'GCF_' with 'GCA_'
+        remove_version: Remove the terminal '.#'
+    Returns:
+        ncbi_accession : NCBI accession e.g. GCA_016456235
+    """
+
+    ncbi_accession = accession[3:]
+    if make_genbank:
+        ncbi_accession = ncbi_accession.replace('GCF_', 'GCA_')
+    if remove_version:
+        ncbi_accession = ncbi_accession[:-2]
+    return ncbi_accession
+    

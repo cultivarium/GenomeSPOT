@@ -14,10 +14,13 @@ logger.setLevel(logging.INFO)
 
 def mapping_wrapper(inputs):
     n, faa_path, fna_path, organism_type, output_path = inputs
-    genome_features = Genome(contig_filepath=fna_path, protein_filepath=faa_path, organism_type=organism_type).genome_metrics()
-    json.dump(genome_features, open(output_path, 'w'))
-    logger.info("{}: {}".format(n, output_path))
-    return output_path
+    try:
+        genome_features = Genome(contig_filepath=fna_path, protein_filepath=faa_path, organism_type=organism_type).genome_metrics()
+        json.dump(genome_features, open(output_path, 'w'))
+        logger.info("{}: {}".format(n, output_path))
+        return output_path
+    except:
+        return None
 
 def create_mapping_inputs(directory, suffix_fna, suffix_faa, output_dir) -> list:
     pathlist = []
@@ -33,6 +36,9 @@ def create_mapping_inputs(directory, suffix_fna, suffix_faa, output_dir) -> list
             genome_accession = genome_accession_from_fasta_path(str(fna_path))
             output_path = "{}/{}.features.json".format(output_dir, genome_accession)
             organism_type = type_dict.get(genome_accession, DEFAULT_TYPE)
+            #if Path(output_path).exists():
+            #    pass
+            #else:
             pathlist.append((faa_path, fna_path, organism_type, output_path))
         else:
             missing_faas.append(fna_path)

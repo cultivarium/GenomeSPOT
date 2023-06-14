@@ -66,7 +66,7 @@ class Protein():
         'W': -2.0, 'Y': -2.0
         }
     
-    # citation: 
+    # Kyte & Doolittle 1982
     HYDROPHOBICITY = {
         'A': 1.8, 'R': -4.5, 'N': -3.5,
         'D': -3.5, 'C': 2.5, 'Q': -3.5,
@@ -78,6 +78,7 @@ class Protein():
         }
     
     # Membrane protein GRAVY is usually >+0.5 the average GRAVY
+    # Kyte & Doolittle 1982
     DIFF_HYDROPHOBICITY_MEMBRANE = 0.5
 
     THERMOSTABLE_RESIDUES = {'I', 'V', 'Y', 'W', 'R', 'E', 'L'}

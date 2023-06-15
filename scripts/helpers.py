@@ -63,7 +63,7 @@ def onehot_range(arr, min_bin : float, max_bin : float, step : float) -> dict:
     return onehot_dict
 
 
-def gtdb_taxonomy_to_dict(taxstring : str) -> dict:
+def gtdb_taxonomy_to_tuple(taxstring : str) -> dict:
     """Convert GTDB taxstring to a dictionary.
     
     Args:
@@ -73,12 +73,15 @@ def gtdb_taxonomy_to_dict(taxstring : str) -> dict:
         taxonomy_dict: A dictionary is keyed by the following ranks: domain, phylum, class, 
             order, family, genus, and species.
     """
-    GTDB_ABBREV = {'d' : 'domain', 'p' : 'phylum', 'c' : 'class', 'o' : 'order', 'f' : 'family' , 'g' : 'genus', 's' : 'species'}
-    taxonomy_dict = {}    
+    ABBREV = {'d' : 'domain', 'p' : 'phylum', 'c' : 'class', 'o' : 'order', 'f' : 'family' , 'g' : 'genus', 's' : 'species'}
+    
+    levels = []
+    names = []
     for level in taxstring.strip().split(';'):
         abbrev, taxon = level.split('__')
-        taxonomy_dict[GTDB_ABBREV[abbrev]] = taxon
-    return taxonomy_dict
+        levels.append(ABBREV[abbrev])
+        names.append(taxon)
+    return tuple(levels), tuple(names)
 
 def gtdb_accession_to_ncbi(accession : str, 
                            make_genbank : bool = True, 

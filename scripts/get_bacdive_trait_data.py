@@ -147,6 +147,7 @@ class ComputeBacDiveTraits():
 
         self.strain_id = self.entry.get('General', {}).get( 'BacDive-ID', None)
         self.taxid_ncbi = self.get_taxid_ncbi()
+        self.species = self.get_species()
         self.genome_accession_ncbi = self.get_genome_accession_ncbi()
 
         self.reported_media = self.get_reported_media()
@@ -155,9 +156,17 @@ class ComputeBacDiveTraits():
         self.reported_salinities = self.get_reported_salinities()
         self.reported_oxygen_tolerances = self.get_reported_oxygen_tolerances()
         
-        self.optimum_ph = self.get_optimum_ph()
-        self.optimum_temperature = self.get_optimum_temperature()
-        self.midpoint_salinity = self.compute_midpoint_salinity()
+        self.ph_optimum = self.get_optimum_ph()
+        self.temperature_optimum = self.get_optimum_temperature()
+        self.salinity_optimum = self.get_optimum_salinity()
+        self.salinity_midpoint = self.compute_midpoint_salinity()
+
+        self.salinity_min = min(self.reported_salinities, default=None)
+        self.salinity_max = max(self.reported_salinities, default=None)
+        self.ph_min = min(self.reported_phs, default=None)
+        self.ph_max = max(self.reported_phs, default=None)
+        self.temperature_min = min(self.reported_temperatures, default=None)
+        self.temperature_max = max(self.reported_temperatures, default=None)
     
     def get_reported_media(self) -> list:
         subsection = self.entry.get('Culture and growth conditions', None).get('culture medium', {})
@@ -208,6 +217,19 @@ class ComputeBacDiveTraits():
         else:
             return None
         
+    def get_optimum_salinity(self) -> list:
+        salinities = []
+        subsection = self.entry.get('Physiology and metabolism', None).get('halophily', {})
+        if isinstance(subsection, dict):
+            salinities.extend(self.parse_halophily_dict(subsection, optimum_only=True))
+        elif isinstance(subsection, list):
+            for _dict in subsection:
+                salinities.extend(self.parse_halophily_dict(_dict , optimum_only=True))
+        if len(salinities) > 0:
+            return np.mean(salinities)
+        else:
+            return None
+        
     def get_reported_oxygen_tolerances(self) -> list:
         subsection = self.entry.get('Physiology and metabolism', None).get('oxygen tolerance', {})
         tolerances = self._query_list_of_dicts(subsection, 'oxygen tolerance', '', [None])
@@ -230,11 +252,14 @@ class ComputeBacDiveTraits():
                 return taxid[0]
         return None
     
+    def get_species(self) -> str:
+        return self.entry.get('Name and taxonomic classification', {}).get('species', None)
+
     def compute_midpoint_salinity(self):
         if len(self.reported_salinities) > 0:
             return np.mean([min(self.reported_salinities), max(self.reported_salinities)])
 
-    def parse_halophily_dict(self, halophily : dict):
+    def parse_halophily_dict(self, halophily : dict, optimum_only=False) -> list:
         """
         Returns growth range of salinity (% NaCl) with the 
         following assumptions:
@@ -248,6 +273,7 @@ class ComputeBacDiveTraits():
         concentration = halophily.get('concentration', '')
         growth = halophily.get('growth')
         salt = halophily.get('salt')
+        tested_relation = halophily.get('tested relation', None)
         
         # conversions for NaCl only
         if 'g/L' in concentration:
@@ -267,8 +293,15 @@ class ComputeBacDiveTraits():
             elif growth in ['positive', 'inconsistent']:
                 concentrations = self._format_values(concentration)
 
-        percent_nacl = [val * conversion for val in concentrations] 
-        return [val for val in percent_nacl if val < 39]
+        percent_nacl = [val * conversion for val in concentrations]
+        salinities = [val for val in percent_nacl if val < 39]
+        if optimum_only:
+            if tested_relation == 'optimum':
+                return salinities
+            else:
+                return []
+        else:
+            return salinities
     
     def _query_list_of_dicts(self, obj, key, required_key, required_vals : list):
         """
@@ -342,6 +375,50 @@ class ComputeBacDiveTraits():
         
         return onehot_tolerances
     
+    def screen_optima(self, optimum, min, max, optima_to_check : list):
+        """Returns False if the optimum is suspect.
+        
+        If min and max values are not reported or equal to the optimum,
+        it is more likely that the experimenter only tested one condition
+        and is therefore not reporting the true optimum.
+        """
+        use_optimum = True
+        if optimum:
+            for val in optima_to_check:
+                if optimum == val:
+                    if min == optimum or max == optimum:
+                        use_optimum = False
+                    if min is None and max is None:
+                        use_optimum = False
+        else:
+            use_optimum = False
+
+        return use_optimum
+
+    def feature_quality(self) -> dict:
+        """Runs screens to flag data as good (True) or bad (False)"""
+        use_ph_optimum = self.screen_optima(self.ph_optimum,
+                                             self.ph_min, self.ph_max,
+                                             optima_to_check=[7, 7.5]
+                                             )
+        use_temperature_optimum = self.screen_optima(self.temperature_optimum,
+                                                    self.temperature_min, self.temperature_max,
+                                                    optima_to_check=[20, 25, 30, 37]
+                                                    )
+
+        use_salinity_optimum = self.screen_optima(self.salinity_optimum,
+                                                    self.salinity_min, self.salinity_max,
+                                                    optima_to_check=[ 0.5, 3, 3.5]
+                                                    )
+       
+        quality_dict = {
+            'use_ph_optimum' : use_ph_optimum,
+            'use_temperature_optimum' : use_temperature_optimum,
+            'use_salinity_optimum' : use_salinity_optimum,
+        }
+
+        return quality_dict
+
     def compute_trait_data(self,):
         """
         Loads trait data, differently by source, to a set of
@@ -352,16 +429,20 @@ class ComputeBacDiveTraits():
             'ncbi_accession' : self.genome_accession_ncbi,
             'ncbi_taxid' : self.taxid_ncbi,
             'strain_id' : self.strain_id,
-            'ph_optimum' : self.optimum_ph,
-            'temperature_optimum' : self.optimum_temperature,
-            'salinity_midpoint' : self.midpoint_salinity,
-            'salinity_min' : min(self.reported_salinities, default=None),
-            'salinity_max' : max(self.reported_salinities, default=None),
-            'ph_min': min(self.reported_phs, default=None),
-            'ph_max': max(self.reported_phs, default=None),
-            'temperature_min' : min(self.reported_temperatures, default=None),
-            'temperature_max' : max(self.reported_temperatures, default=None),
+            'species' : self.species,
+            'ph_optimum' : self.ph_optimum,
+            'temperature_optimum' : self.temperature_optimum,
+            'salinity_optimum' : self.salinity_optimum,
+            'salinity_midpoint' : self.salinity_midpoint,
+            'salinity_min' :  self.salinity_min,
+            'salinity_max' : self.salinity_max,
+            'ph_min': self.ph_min,
+            'ph_max': self.ph_max,
+            'temperature_min' : self.temperature_min,
+            'temperature_max' :self.temperature_max,
                    }
+
+        features.update(self.feature_quality())
 
         # features.update(self._onehot_range(self.reported_salinities, 0, 38.4, 0.5, prefix='nacl')) # salinity range
         # features.update(self._onehot_range(self.reported_phs, 0, 14, 0.25, prefix='ph')) # pH range 

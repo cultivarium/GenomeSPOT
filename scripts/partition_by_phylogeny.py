@@ -272,6 +272,38 @@ class PhylogeneticPartition():
 
         return {'in' : retained_genomes, 'out' : partitioned_genomes}
     
+    def get_genomes_in_partitioned_taxa(self, partitioned_genomes : set) -> set:
+        """Provides all genomes within taxa selected for partitioning.
+
+        For example, if the partition rank is family, if a partitioned
+        genome was from family A, all genomes from family A would be returned.
+        This is useful for two reasons. First, balancing the dataset will remove some
+        genomes from the partition, and including them in the non-partitioned data
+        will represent leakage. Second, the GTDB may be updated with more genomes,
+        and it will be helpful to identify genomes related to the test set and remove them.
+
+        Args:
+            partitioned_genomes: Set of genomes selected for the partition
+
+        Returns:
+            related_genomes: Set of genomes within the same taxon as partitioned genomes
+        """
+
+        partitioned_taxa = []
+        for genome in partitioned_genomes:
+            taxonomy = self.taxonomy_dict.get(genome, None)
+            if taxonomy:
+                partitioned_taxa.append(taxonomy[self.taxonomy_indices[self.partition_rank]])
+        
+        related_genomes = []
+        for genome, taxonomy in self.taxonomy_dict.items():
+            taxon = taxonomy[self.taxonomy_indices[self.partition_rank]]
+            if taxon in partitioned_taxa:
+                related_genomes.append(genome)
+
+        return set(related_genomes)
+
+
     def assess_distance_to_reference(self, subset_genomes, rank : str='phylum'):
         """Bray-Curtis dissimilarity of composition to taxonomy reference"""
         n_reference = self.measure_diversity(rank, 'species')

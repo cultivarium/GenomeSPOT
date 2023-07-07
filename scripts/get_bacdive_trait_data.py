@@ -168,10 +168,74 @@ class ComputeBacDiveTraits():
         self.temperature_min = min(self.reported_temperatures, default=None)
         self.temperature_max = max(self.reported_temperatures, default=None)
     
+    def _query_list_of_dicts(self, obj, key, required_key, required_vals : list):
+        """Helper to  parsed nested dictionary or list of dictionaries.
+
+        Keys values from 1 dict or a list of dicts with a 
+        condition that another key-value pair is present
+        """
+        arr = []
+        if isinstance(obj, dict):
+            val = self._query_dict_conditionally(obj, key, required_key, required_vals)
+            if val:
+                arr.append(val)
+        elif isinstance(obj, list): # multiple values
+            for subobj in obj:
+                if isinstance(subobj, dict):
+                    val = self._query_dict_conditionally(subobj, key, required_key, required_vals)
+                    if val:
+                        arr.append(val)
+        return arr
+    
+    def _query_dict_conditionally(self, obj : dict, key, required_key, required_vals : list):
+        """Looks up value if other value in dictionary is among accepted values"""
+        if obj.get(required_key, None) in required_vals:
+            return obj.get(key, None)
+        else:
+            return None
+
+    def _format_values(self, string : str) -> list:
+        """
+        Uses regex and replace to extract non-float characters from
+        strings and correct for typos in data entry. If a range,
+        like 3.4-8.4, both values will be returned. Otherwise, one
+        value will be returned.
+        """
+        regex = re.compile(r"[-+]?(?:\d*\.*\d+)")
+        if '-' in string:
+            return [float(regex.search(val).group(0).replace('..', '.')) for val in string.split('-') if len(val) > 0]
+        else:
+            return [float(regex.search(string).group(0))]
+            
     def get_reported_media(self) -> list:
         subsection = self.entry.get('Culture and growth conditions', None).get('culture medium', {})
         media_ids = self._query_list_of_dicts(subsection, '@ref', 'growth', ['yes', 'positive'])
         return set(media_ids)
+    
+    def get_genome_accession_ncbi(self) -> str:
+        subsection = self.entry.get('Sequence information', {}).get('Genome sequences', {})
+        accessions = self._query_list_of_dicts(subsection, 'accession',  'database', ['ncbi'])
+        if len(accessions) > 0:
+            return accessions[0]
+        else:
+            return None
+        
+    def get_taxid_ncbi(self) -> str:
+        """Returns taxid for lowest taxonomic level"""
+        subsection = self.entry.get('General', {}).get('NCBI tax id', {})
+        for level in ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'domain']:
+            taxid = self._query_list_of_dicts(subsection, 'NCBI tax id',  'Matching level', [level])
+            if taxid:
+                return taxid[0]
+        return None
+    
+    def get_species(self) -> str:
+        return self.entry.get('Name and taxonomic classification', {}).get('species', None)
+        
+    def get_reported_oxygen_tolerances(self) -> list:
+        subsection = self.entry.get('Physiology and metabolism', None).get('oxygen tolerance', {})
+        tolerances = self._query_list_of_dicts(subsection, 'oxygen tolerance', '', [None])
+        return set(tolerances)
     
     def get_reported_temperatures(self) -> list:
         temperatures = []
@@ -230,31 +294,6 @@ class ComputeBacDiveTraits():
         else:
             return None
         
-    def get_reported_oxygen_tolerances(self) -> list:
-        subsection = self.entry.get('Physiology and metabolism', None).get('oxygen tolerance', {})
-        tolerances = self._query_list_of_dicts(subsection, 'oxygen tolerance', '', [None])
-        return set(tolerances)
-    
-    def get_genome_accession_ncbi(self) -> str:
-        subsection = self.entry.get('Sequence information', {}).get('Genome sequences', {})
-        accessions = self._query_list_of_dicts(subsection, 'accession',  'database', ['ncbi'])
-        if len(accessions) > 0:
-            return accessions[0]
-        else:
-            return None
-        
-    def get_taxid_ncbi(self) -> str:
-        """Returns taxid for lowest taxonomic level"""
-        subsection = self.entry.get('General', {}).get('NCBI tax id', {})
-        for level in ['strain', 'species', 'genus', 'family', 'order', 'class', 'phylum', 'domain']:
-            taxid = self._query_list_of_dicts(subsection, 'NCBI tax id',  'Matching level', [level])
-            if taxid:
-                return taxid[0]
-        return None
-    
-    def get_species(self) -> str:
-        return self.entry.get('Name and taxonomic classification', {}).get('species', None)
-
     def compute_midpoint_salinity(self):
         if len(self.reported_salinities) > 0:
             return np.mean([min(self.reported_salinities), max(self.reported_salinities)])
@@ -302,44 +341,6 @@ class ComputeBacDiveTraits():
                 return []
         else:
             return salinities
-    
-    def _query_list_of_dicts(self, obj, key, required_key, required_vals : list):
-        """
-        Keys values from 1 dict or a list of dicts with a 
-        condition that another key-value pair is present
-        """
-        arr = []
-        if isinstance(obj, dict):
-            val = self._query_dict_conditionally(obj, key, required_key, required_vals)
-            if val:
-                arr.append(val)
-        elif isinstance(obj, list): # multiple values
-            for subobj in obj:
-                if isinstance(subobj, dict):
-                    val = self._query_dict_conditionally(subobj, key, required_key, required_vals)
-                    if val:
-                        arr.append(val)
-        return arr
-    
-    def _query_dict_conditionally(self, obj : dict, key, required_key, required_vals : list):
-        """Lookup value if other value in dictionary among accepted values"""
-        if obj.get(required_key, None) in required_vals:
-            return obj.get(key, None)
-        else:
-            return None
-
-    def _format_values(self, string : str) -> list:
-        """
-        Uses regex and replace to extract non-float characters from
-        strings and correct for typos in data entry. If a range,
-        like 3.4-8.4, both values will be returned. Otherwise, one
-        value will be returned.
-        """
-        regex = re.compile(r"[-+]?(?:\d*\.*\d+)")
-        if '-' in string:
-            return [float(regex.search(val).group(0).replace('..', '.')) for val in string.split('-') if len(val) > 0]
-        else:
-            return [float(regex.search(string).group(0))]
         
     def _onehot_range(arr, min_bin : float, max_bin : float, step : float, prefix : str) -> dict:
         """Return onehot ranges formatted with prefixes"""
@@ -375,25 +376,7 @@ class ComputeBacDiveTraits():
         
         return onehot_tolerances
     
-    def screen_optima(self, optimum, min, max, optima_to_check : list):
-        """Returns False if the optimum is suspect.
-        
-        If min and max values are not reported or equal to the optimum,
-        it is more likely that the experimenter only tested one condition
-        and is therefore not reporting the true optimum.
-        """
-        use_optimum = True
-        if optimum:
-            for val in optima_to_check:
-                if optimum == val:
-                    if min == optimum or max == optimum:
-                        use_optimum = False
-                    if min is None and max is None:
-                        use_optimum = False
-        else:
-            use_optimum = False
 
-        return use_optimum
 
     def feature_quality(self) -> dict:
         """Runs screens to flag data as good (True) or bad (False)"""
@@ -418,7 +401,27 @@ class ComputeBacDiveTraits():
         }
 
         return quality_dict
+    
+    def screen_optima(self, optimum, min, max, optima_to_check : list):
+        """Returns False if the optimum is suspect.
+        
+        If min and max values are not reported or equal to the optimum,
+        it is more likely that the experimenter only tested one condition
+        and is therefore not reporting the true optimum.
+        """
+        use_optimum = True
+        if optimum:
+            for val in optima_to_check:
+                if optimum == val:
+                    if min == optimum or max == optimum:
+                        use_optimum = False
+                    if min is None and max is None:
+                        use_optimum = False
+        else:
+            use_optimum = False
 
+        return use_optimum
+    
     def compute_trait_data(self,):
         """
         Loads trait data, differently by source, to a set of
@@ -444,9 +447,6 @@ class ComputeBacDiveTraits():
 
         features.update(self.feature_quality())
 
-        # features.update(self._onehot_range(self.reported_salinities, 0, 38.4, 0.5, prefix='nacl')) # salinity range
-        # features.update(self._onehot_range(self.reported_phs, 0, 14, 0.25, prefix='ph')) # pH range 
-        # features.update(self._onehot_range(self.reported_temperatures, 0, 100, 1, prefix='temp')) # temperature range
         features.update(self.onehot_oxygen_tolerance(self.reported_oxygen_tolerances)) # o2 tolerance
 
         return features

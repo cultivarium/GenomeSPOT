@@ -156,7 +156,8 @@ class ComputeBacDiveTraits():
         self.reported_salinities = self.get_reported_salinities()
         self.reported_oxygen_tolerances = self.get_reported_oxygen_tolerances()
         
-        self.ph_optimum = self.get_optimum_ph()
+        self.ph_optimum_min, self.ph_optimum_max = self.get_optimum_ph_min_max()
+        self.ph_optimum = self.get_optimum_ph(self.ph_optimum_min, self.ph_optimum_max)
         self.temperature_optimum = self.get_optimum_temperature()
         self.salinity_optimum = self.get_optimum_salinity()
         self.salinity_midpoint = self.compute_midpoint_salinity()
@@ -261,13 +262,19 @@ class ComputeBacDiveTraits():
                 salinities.extend(self.parse_halophily_dict(_dict))
         return set(salinities)
     
-    def get_optimum_ph(self) -> list:
+    def get_optimum_ph_min_max(self) -> tuple:
         phs = []
         subsection = self.entry.get('Culture and growth conditions', {}).get('culture pH', {})
         for val in self._query_list_of_dicts(subsection, 'pH', 'type', ['optimum']):
             phs.extend(self._format_values(val))
         if len(phs) > 0:
-            return np.mean(phs)
+            return np.min(phs), np.max(phs)
+        else:
+            return None, None
+
+    def get_optimum_ph(self, min_optimum, max_optimum) -> float:
+        if min_optimum and max_optimum:
+            return np.mean([min_optimum, max_optimum])
         else:
             return None
     
@@ -377,32 +384,31 @@ class ComputeBacDiveTraits():
         return onehot_tolerances
     
 
-
     def feature_quality(self) -> dict:
         """Runs screens to flag data as good (True) or bad (False)"""
-        use_ph_optimum = self.screen_optima(self.ph_optimum,
+
+        quality_dict = {
+            'use_ph_optimum' : self.screen_optimum(
+                                            self.ph_optimum,
                                              self.ph_min, self.ph_max,
                                              optima_to_check=[7, 7.5]
-                                             )
-        use_temperature_optimum = self.screen_optima(self.temperature_optimum,
+                                             ),
+            'use_temperature_optimum' : self.screen_optimum(self.temperature_optimum,
                                                     self.temperature_min, self.temperature_max,
                                                     optima_to_check=[20, 25, 30, 37]
-                                                    )
-
-        use_salinity_optimum = self.screen_optima(self.salinity_optimum,
+                                                    ),
+            'use_salinity_optimum' : self.screen_optimum(self.salinity_optimum,
                                                     self.salinity_min, self.salinity_max,
                                                     optima_to_check=[ 0.5, 3, 3.5]
-                                                    )
-       
-        quality_dict = {
-            'use_ph_optimum' : use_ph_optimum,
-            'use_temperature_optimum' : use_temperature_optimum,
-            'use_salinity_optimum' : use_salinity_optimum,
+                                                    ),
+            'use_ph_range' : self.screen_range(self.ph_min, self.ph_max, min_diff=1),
+            'use_temperature_range' : self.screen_range(self.temperature_min, self.temperature_max, min_diff=10),  
+            'use_salinity_range' : self.screen_range(self.salinity_min, self.salinity_max, min_diff=0.49),
         }
 
         return quality_dict
     
-    def screen_optima(self, optimum, min, max, optima_to_check : list):
+    def screen_optimum(self, optimum : float, min : float, max : float, optima_to_check : list):
         """Returns False if the optimum is suspect.
         
         If min and max values are not reported or equal to the optimum,
@@ -422,6 +428,21 @@ class ComputeBacDiveTraits():
 
         return use_optimum
     
+    def screen_range(self, min : float, max : float, min_diff : float):
+        """Returns False if the range is suspect.
+        
+        Requires both min and max to be reported and the difference
+        between them to be greater than the specified distance.
+        """
+        use_range = False
+        if min != None and max != None:
+            if abs(float(max) - float(min)) >= min_diff:
+                use_range = True
+            elif float(min) == 0 and float(max) == 0: # A condition for salinity
+                use_range = True
+
+        return use_range
+    
     def compute_trait_data(self,):
         """
         Loads trait data, differently by source, to a set of
@@ -434,6 +455,8 @@ class ComputeBacDiveTraits():
             'strain_id' : self.strain_id,
             'species' : self.species,
             'ph_optimum' : self.ph_optimum,
+            'ph_optimum_min' : self.ph_optimum_min,
+            'ph_optimum_max' : self.ph_optimum_max,
             'temperature_optimum' : self.temperature_optimum,
             'salinity_optimum' : self.salinity_optimum,
             'salinity_midpoint' : self.salinity_midpoint,

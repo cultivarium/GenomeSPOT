@@ -18,12 +18,11 @@ import json
 import logging
 from pathlib import Path
 import subprocess as sp
-from tempfile import NamedTemporaryFile
 
 import docker
 import numpy as np
 
-from helpers import fasta_iter, nonnull, bin_midpoints
+from helpers import fasta_iter
 from primary_sequences import Protein, DNA
 
 def _get_exported_proteins_with_deepsig(protein_fasta, organism_type) -> set:
@@ -131,6 +130,8 @@ class Genome():
         protein_statistics['pis_acidic'] = float(np.sum((pis < 5.5)) / len(pis))
         protein_statistics['pis_neutral'] = float(np.sum(((pis >= 5.5) & (pis < 8.5))) / len(pis))
         protein_statistics['pis_basic'] = float( np.sum((pis >= 8.5)) / len(pis))
+        for i in range(0, 14, 1):
+            protein_statistics['pis_{}_{}'.format(i, i + 1)] = len([pi for pi in pis if pi > i and pi < (i + 1)]) / len(pis)
 
         # means
         protein_statistics['mean_pi'] = float(np.mean(pis))

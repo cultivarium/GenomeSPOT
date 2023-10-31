@@ -5,6 +5,7 @@ import multiprocessing
 import logging
 
 from measure_genome import Genome
+from signal_peptide import SignalPeptideHMM
 
 ORGANISM_TYPE_DICT = "./data/references/organism_types.json"
 DEFAULT_TYPE = "gramp"
@@ -17,7 +18,10 @@ def mapping_wrapper(inputs):
     n, faa_path, fna_path, organism_type, output_path = inputs
     try:
         genome_features = Genome(
-            contig_filepath=fna_path, protein_filepath=faa_path, organism_type=organism_type
+            contig_filepath=fna_path,
+            protein_filepath=faa_path,
+            organism_type=organism_type,
+            signal_peptide_model=SignalPeptideHMM(),
         ).genome_metrics()
         json.dump(genome_features, open(output_path, "w"))
         logger.info("{}: {}".format(n, output_path))

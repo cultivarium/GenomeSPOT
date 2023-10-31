@@ -14,6 +14,7 @@ import argparse
 from collections import defaultdict
 import gzip
 import io
+import joblib
 import json
 import logging
 from pathlib import Path
@@ -24,63 +25,27 @@ import numpy as np
 
 from helpers import fasta_iter
 from primary_sequences import Protein, DNA
-
-
-def _get_exported_proteins_with_deepsig(protein_fasta, organism_type) -> set:
-    """Uses a preexisting Docker container to run DeepSig.
-    The protein FASTA must be located under the current working
-    directory.
-
-    Args:
-        protein_fasta: path to protein FASTA
-        organism_type: either euk/gramp/gramn
-    """
-
-    # Run DeepSig
-    if protein_fasta.endswith(".gz"):
-        input_fasta = protein_fasta.replace(".gz", "")
-        with open(input_fasta, "w") as fhout:
-            with io.TextIOWrapper(io.BufferedReader(gzip.open(protein_fasta, "r"))) as fh:
-                for line in fh.readlines():
-                    fhout.write(line)
-    else:
-        input_fasta = protein_fasta
-    temp_output = input_fasta + ".deepsig.gff3"
-    client = docker.from_env()
-    local_bind = docker.types.Mount(source=str(Path.cwd()), target="/home/cultivarium/files/deepsig/data", type="bind")
-    client.containers.run(
-        "deepsig:latest",
-        f"-f data/{input_fasta} -o data/{temp_output} -k {organism_type}",
-        auto_remove=True,
-        mounts=[local_bind],
-    )
-
-    # Parse output
-    exported_proteins = set()
-    with open(temp_output, "r") as fh:
-        for line in fh.readlines():
-            entry = line.strip().split("\t")
-            protein_id = entry[0]
-            signal_prediction = entry[2]
-            if signal_prediction == "Signal peptide":
-                exported_proteins.add(protein_id)
-
-    # Remove intermediates
-    if protein_fasta.endswith(".gz"):
-        Path(input_fasta).unlink()
-    Path(temp_output).unlink()
-
-    return exported_proteins
+from signal_peptide import SignalPeptideHMM
 
 
 class Genome:
-    def __init__(self, protein_filepath: Path, contig_filepath: Path, organism_type: str):
+    def __init__(
+        self,
+        protein_filepath: Path,
+        contig_filepath: Path,
+        organism_type: str,
+        signal_peptide_model: SignalPeptideHMM,
+    ):
         self.faa_filepath = str(protein_filepath)
         self.fna_filepath = str(contig_filepath)
         self.organism_type = str(organism_type).replace("arch", "gramn")
         self.prefix = ".".join(self.faa_filepath.split("/")[-1].split(".")[:-1])
         self._protein_data = None
         self._protein_localization = None
+        self.signal_peptide_model = signal_peptide_model
+
+    def _length_weighted_average(self, values, lengths):
+        return float(np.sum([length * val for length, val in zip(lengths, values)]) / np.sum(lengths))
 
     def protein_data(self):
         """
@@ -99,7 +64,11 @@ class Genome:
             fh.seek(0)
             for header, sequence in fasta_iter(fh):
                 protein_id = header.split(" ")[0]
-                self._protein_data[protein_id] = Protein(sequence).protein_metrics()
+                self._protein_data[protein_id] = Protein(
+                    protein_sequence=sequence,
+                    signal_peptide_model=self.signal_peptide_model,
+                    remove_signal_peptide=True,
+                ).protein_metrics()
             fh.close()
         return self._protein_data
 
@@ -136,23 +105,27 @@ class Genome:
             ) / len(pis)
 
         # means
+
         protein_statistics["mean_pi"] = float(np.mean(pis))
         protein_statistics["mean_gravy"] = float(np.mean(values_dict["gravy"]))
         protein_statistics["mean_zc"] = float(np.mean(values_dict["zc"]))
         protein_statistics["mean_nh2o"] = float(np.mean(values_dict["nh2o"]))
-        protein_statistics["mean_thermostable_freq"] = float(np.mean(values_dict["thermostable_freq"]))
         protein_statistics["mean_protein_length"] = float(np.mean(values_dict["length"]))
+        protein_statistics["mean_thermostable_freq"] = self._length_weighted_average(
+            values_dict["thermostable_freq"], values_dict["length"]
+        )
 
         # ratios and proportion
-        arg = np.mean(values_dict.get("aa_R", 0.0))
-        lys = np.mean(values_dict.get("aa_K", 0.0))
+        zeros_list = [0] * len(values_dict["length"])
+        arg = self._length_weighted_average(values_dict.get("aa_R", zeros_list), values_dict["length"])
+        lys = self._length_weighted_average(values_dict.get("aa_K", zeros_list), values_dict["length"])
         if arg + lys > 0:
             protein_statistics["proportion_R_RK"] = float(arg / (arg + lys))
 
         # amino acid k-mer frequencies
         for variable, values in values_dict.items():
             if variable.startswith("aa_"):
-                protein_statistics[variable] = float(np.mean(values))
+                protein_statistics[variable] = self._length_weighted_average(values, values_dict["length"])
 
         return protein_statistics
 
@@ -170,8 +143,8 @@ class Genome:
         """
 
         if self._protein_localization is None:
-            exported_proteins = _get_exported_proteins_with_deepsig(self.faa_filepath, self.organism_type)
-            self.exported_proteins = exported_proteins
+            # exported_proteins = _get_exported_proteins_with_deepsig(self.faa_filepath, self.organism_type)
+            # self.exported_proteins = exported_proteins
             mean_hydrophobicity = np.mean(
                 [v["gravy"] for k, v in self.protein_data().items() if v["gravy"] is not None]
             )
@@ -182,7 +155,9 @@ class Genome:
                 if (hydrophobicity - mean_hydrophobicity) >= Protein.DIFF_HYDROPHOBICITY_MEMBRANE:
                     self._protein_localization[protein] = "membrane"
                 else:
-                    if protein in exported_proteins:
+                    # Get localization
+                    is_exported = self.protein_data()[protein]["is_exported"]
+                    if is_exported is True:
                         self._protein_localization[protein] = "extra_soluble"
                     else:
                         self._protein_localization[protein] = "intra_soluble"

@@ -26,6 +26,7 @@ from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
 import numpy as np
 
 from helpers import count_kmers
+from signal_peptide import SignalPeptideHMM
 
 
 class Protein:
@@ -144,15 +145,18 @@ class Protein:
 
     THERMOSTABLE_RESIDUES = {"I", "V", "Y", "W", "R", "E", "L"}
 
-    def __init__(self, protein_sequence: str):
+    def __init__(self, protein_sequence: str, remove_signal_peptide: True, signal_peptide_model: SignalPeptideHMM):
         """
         Args:
             protein_sequence: Amino acid sequence of one protein
         """
         self.sequence = self._format_protein_sequence(protein_sequence)
         self.length = len(self.sequence)
+        self.start_pos = 1  # remove n-terminal Met
         self._aa_1mer_frequencies = None
         self._aa_2mer_frequencies = None
+        self.signal_peptide_model = signal_peptide_model
+        self.remove_signal_peptide = remove_signal_peptide
 
     def _format_protein_sequence(self, protein_sequence: str) -> str:
         """Returns a formatted amino acid sequence"""
@@ -163,7 +167,8 @@ class Protein:
         if self._aa_1mer_frequencies is None:
             if self.length > 1:
                 self._aa_1mer_frequencies = {
-                    k: float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=1).items()
+                    k: float(v / len(self.sequence[self.start_pos :]))
+                    for k, v in count_kmers(self.sequence[self.start_pos :], k=1).items()
                 }
             else:
                 self._aa_1mer_frequencies = {}
@@ -174,7 +179,8 @@ class Protein:
         if self._aa_2mer_frequencies is None:
             if self.length > 1:
                 self._aa_2mer_frequencies = {
-                    k: float(v / len(self.sequence[1:])) for k, v in count_kmers(self.sequence[1:], k=2).items()
+                    k: float(v / len(self.sequence[self.start_pos :]))
+                    for k, v in count_kmers(self.sequence[self.start_pos :], k=2).items()
                 }
             else:
                 self._aa_2mer_frequencies = {}
@@ -184,7 +190,7 @@ class Protein:
         """Compute the isoelectric point (pI) of the protein"""
         if self.length > 0:
             # to-do: remove unnecessary Biopython dependency
-            return IsoelectricPoint(self.sequence).pi()
+            return IsoelectricPoint(self.sequence[self.start_pos :]).pi()
         else:
             return np.nan
 
@@ -193,7 +199,7 @@ class Protein:
         Grand Average of Hydropathy (GRAVY)
         """
         if self.length > 0:
-            return np.mean([self.HYDROPHOBICITY[aa] for aa in self.sequence])
+            return np.mean([self.HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]])
         else:
             return np.nan
 
@@ -201,13 +207,13 @@ class Protein:
         """Computes average carbon oxidation state (Zc) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([self.WEIGHTED_ZC[s] for s in self.sequence]) / self.length
+        return sum([self.WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
 
     def nh2o(self) -> float:
         """Computes stoichiometric hydration state (nH2O) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([self.NH2O_RQEC[s] for s in self.sequence]) / self.length
+        return sum([self.NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
 
     def thermostable_freq(self) -> float:
         """Thermostable residues reported by:
@@ -221,6 +227,11 @@ class Protein:
     def protein_metrics(self) -> dict:
         """Computes a dictionary with all metrics for a protein"""
 
+        is_exported, signal_end_index = self.signal_peptide_model.predict_signal_peptide(self.sequence)
+        if self.remove_signal_peptide is True:
+            self.start_pos = signal_end_index + 1
+        self.length = len(self.sequence[self.start_pos :])
+
         sequence_metrics = {
             "pi": self.pi(),
             "zc": self.zc(),
@@ -228,6 +239,7 @@ class Protein:
             "gravy": self.gravy(),
             "thermostable_freq": self.thermostable_freq(),
             "length": self.length,
+            "is_exported": is_exported,
         }
 
         # Must prepend with "aa_" because code overlaps with nts

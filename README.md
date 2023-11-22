@@ -1,11 +1,15 @@
-# predict-media-physicochemistry
-Project to build a predictive model of pH, temperature, oxygen, and salinity preferences
 
-Install/download dependencies:
+Predicts pH, temperature, oxygen, and salinity preferences from microbial genomes.
+
+# Quick start
 
 ```shell
 pip install -r requirements.txt
+python predict_physicochemistry.py
 ```
 
-# Predict growth conditions for a genome
+# Key considerations
 
+# Organization
+
+# Tutorial

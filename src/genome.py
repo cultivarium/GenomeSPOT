@@ -20,11 +20,11 @@ import logging
 from pathlib import Path
 import subprocess as sp
 
-import docker
 import numpy as np
 
 from helpers import fasta_iter
-from primary_sequences import Protein, DNA
+from protein import Protein
+from dna import DNA
 from signal_peptide import SignalPeptideHMM
 
 
@@ -33,16 +33,12 @@ class Genome:
         self,
         protein_filepath: Path,
         contig_filepath: Path,
-        organism_type: str,
-        signal_peptide_model: SignalPeptideHMM,
     ):
         self.faa_filepath = str(protein_filepath)
         self.fna_filepath = str(contig_filepath)
-        self.organism_type = str(organism_type).replace("arch", "gramn")
         self.prefix = ".".join(self.faa_filepath.split("/")[-1].split(".")[:-1])
         self._protein_data = None
         self._protein_localization = None
-        self.signal_peptide_model = signal_peptide_model
 
     def _length_weighted_average(self, values, lengths):
         return float(
@@ -71,7 +67,6 @@ class Genome:
                 protein_id = header.split(" ")[0]
                 self._protein_data[protein_id] = Protein(
                     protein_sequence=sequence,
-                    signal_peptide_model=self.signal_peptide_model,
                     remove_signal_peptide=True,
                 ).protein_metrics()
             fh.close()
@@ -288,7 +283,6 @@ if __name__ == "__main__":
     genome_features = Genome(
         protein_filepath=args.proteins,
         contig_filepath=args.contigs,
-        organism_type=args.organism_type,
     ).genome_metrics()
 
     json.dump(genome_features, open(output, "w"))

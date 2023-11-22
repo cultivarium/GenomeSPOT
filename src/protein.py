@@ -143,8 +143,7 @@ class Protein:
     def __init__(
         self,
         protein_sequence: str,
-        remove_signal_peptide: True,
-        signal_peptide_model: SignalPeptideHMM,
+        remove_signal_peptide: bool = True,
     ):
         """
         Args:
@@ -155,7 +154,7 @@ class Protein:
         self.start_pos = 1  # remove n-terminal Met
         self._aa_1mer_frequencies = None
         self._aa_2mer_frequencies = None
-        self.signal_peptide_model = signal_peptide_model
+        self.signal_peptide_model = SignalPeptideHMM()
         self.remove_signal_peptide = remove_signal_peptide
 
     def _format_protein_sequence(self, protein_sequence: str) -> str:

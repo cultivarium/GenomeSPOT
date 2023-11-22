@@ -145,7 +145,12 @@ class Protein:
 
     THERMOSTABLE_RESIDUES = {"I", "V", "Y", "W", "R", "E", "L"}
 
-    def __init__(self, protein_sequence: str, remove_signal_peptide: True, signal_peptide_model: SignalPeptideHMM):
+    def __init__(
+        self,
+        protein_sequence: str,
+        remove_signal_peptide: True,
+        signal_peptide_model: SignalPeptideHMM,
+    ):
         """
         Args:
             protein_sequence: Amino acid sequence of one protein
@@ -160,7 +165,13 @@ class Protein:
 
     def _format_protein_sequence(self, protein_sequence: str) -> str:
         """Returns a formatted amino acid sequence"""
-        return "".join([aa for aa in protein_sequence.strip().upper() if aa in self.STANDARD_AMINO_ACIDS])
+        return "".join(
+            [
+                aa
+                for aa in protein_sequence.strip().upper()
+                if aa in self.STANDARD_AMINO_ACIDS
+            ]
+        )
 
     def aa_1mer_frequencies(self) -> dict:
         """Returns count of every amino acid ignoring start methionine"""
@@ -168,7 +179,9 @@ class Protein:
             if self.length > 1:
                 self._aa_1mer_frequencies = {
                     k: float(v / len(self.sequence[self.start_pos :]))
-                    for k, v in count_kmers(self.sequence[self.start_pos :], k=1).items()
+                    for k, v in count_kmers(
+                        self.sequence[self.start_pos :], k=1
+                    ).items()
                 }
             else:
                 self._aa_1mer_frequencies = {}
@@ -180,7 +193,9 @@ class Protein:
             if self.length > 1:
                 self._aa_2mer_frequencies = {
                     k: float(v / len(self.sequence[self.start_pos :]))
-                    for k, v in count_kmers(self.sequence[self.start_pos :], k=2).items()
+                    for k, v in count_kmers(
+                        self.sequence[self.start_pos :], k=2
+                    ).items()
                 }
             else:
                 self._aa_2mer_frequencies = {}
@@ -199,7 +214,9 @@ class Protein:
         Grand Average of Hydropathy (GRAVY)
         """
         if self.length > 0:
-            return np.mean([self.HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]])
+            return np.mean(
+                [self.HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]]
+            )
         else:
             return np.nan
 
@@ -207,27 +224,42 @@ class Protein:
         """Computes average carbon oxidation state (Zc) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([self.WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        return (
+            sum([self.WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]])
+            / self.length
+        )
 
     def nh2o(self) -> float:
         """Computes stoichiometric hydration state (nH2O) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([self.NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        return (
+            sum([self.NH2O_RQEC[s] for s in self.sequence[self.start_pos :]])
+            / self.length
+        )
 
     def thermostable_freq(self) -> float:
         """Thermostable residues reported by:
         https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.0030005
         """
         if self.length > 0:
-            return sum([v for k, v in self.aa_1mer_frequencies().items() if k in self.THERMOSTABLE_RESIDUES])
+            return sum(
+                [
+                    v
+                    for k, v in self.aa_1mer_frequencies().items()
+                    if k in self.THERMOSTABLE_RESIDUES
+                ]
+            )
         else:
             return np.nan
 
     def protein_metrics(self) -> dict:
         """Computes a dictionary with all metrics for a protein"""
 
-        is_exported, signal_end_index = self.signal_peptide_model.predict_signal_peptide(self.sequence)
+        (
+            is_exported,
+            signal_end_index,
+        ) = self.signal_peptide_model.predict_signal_peptide(self.sequence)
         if self.remove_signal_peptide is True:
             self.start_pos = signal_end_index + 1
         self.length = len(self.sequence[self.start_pos :])
@@ -283,7 +315,9 @@ class DNA:
         all k-mers at a given k. E.g.: {'AA' : 'TT', 'AA' : 'AA'}
         """
         canonical_kmers_dict = {}
-        kmers_sorted = sorted(["".join(i) for i in product(["A", "T", "C", "G"], repeat=k)])
+        kmers_sorted = sorted(
+            ["".join(i) for i in product(["A", "T", "C", "G"], repeat=k)]
+        )
         for kmer in kmers_sorted:
             if kmer not in canonical_kmers_dict.keys():
                 canonical_kmers_dict[kmer] = kmer
@@ -310,7 +344,9 @@ class DNA:
         if self._nt_1mer_frequencies is None:
             kmers_count = self.count_canonical_kmers(k=1)
             n_kmers = sum(kmers_count.values())
-            self._nt_1mer_frequencies = {k: float(v / n_kmers) for k, v in kmers_count.items()}
+            self._nt_1mer_frequencies = {
+                k: float(v / n_kmers) for k, v in kmers_count.items()
+            }
         return self._nt_1mer_frequencies
 
     def nt_2mer_frequencies(self) -> dict:
@@ -318,7 +354,9 @@ class DNA:
         if self._nt_2mer_frequencies is None:
             kmers_count = self.count_canonical_kmers(k=2)
             n_kmers = sum(kmers_count.values())
-            self._nt_2mer_frequencies = {k: float(v / n_kmers) for k, v in kmers_count.items()}
+            self._nt_2mer_frequencies = {
+                k: float(v / n_kmers) for k, v in kmers_count.items()
+            }
         return self._nt_2mer_frequencies
 
     def purine_pyrimidine_transition_freq(self) -> float:

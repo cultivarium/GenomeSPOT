@@ -6,7 +6,8 @@ from typing import IO, Tuple
 
 import numpy as np
 
-def fasta_iter(fasta_file : IO) -> Tuple[str, str]:
+
+def fasta_iter(fasta_file: IO) -> Tuple[str, str]:
     """Iterable yielding FASTA header and sequence
 
     Modified from: https://www.biostars.org/p/710/
@@ -24,25 +25,28 @@ def fasta_iter(fasta_file : IO) -> Tuple[str, str]:
         seq = "".join(s.strip() for s in faiter.__next__())
         yield (headerStr, seq)
 
-def count_kmers(sequence : str, k : int) -> dict:
+
+def count_kmers(sequence: str, k: int) -> dict:
     """Returns counts of every observed k-mer at specific k.
-    
+
     Args:
-        sequence: Sequence, protein or nucleotide 
+        sequence: Sequence, protein or nucleotide
         k: Length of string
-    
+
     Returns:
         Dictionary of k-mer counts e.g. {'AA' : 2, ...}
     """
-    kmers_count = Counter([sequence[i:i+k] for i in range(len(sequence) - k + 1)])
+    kmers_count = Counter([sequence[i : i + k] for i in range(len(sequence) - k + 1)])
     return dict(kmers_count)
 
-def nonnull(list_ : list):
+
+def nonnull(list_: list):
     """Returns array without NaN values"""
     X = np.array(list_)
     return X[~np.isnan(X)]
 
-def bin_midpoints(data : np.array, bins: np.array):
+
+def bin_midpoints(data: np.array, bins: np.array):
     """Returns counts per bin keyed by bin midpoint"""
     bin_counts = []
     bin_midpoints = []
@@ -52,7 +56,8 @@ def bin_midpoints(data : np.array, bins: np.array):
         bin_midpoints.append(round(np.mean([bins[bin_idx], bins[bin_idx + 1]]), 3))
     return dict(zip(bin_midpoints, bin_counts))
 
-def onehot_range(arr, min_bin : float, max_bin : float, step : float) -> dict:
+
+def onehot_range(arr, min_bin: float, max_bin: float, step: float) -> dict:
     """Returns a dictionary of presence or absence in a bin"""
     onehot_dict = {}
     for bin_floor in np.arange(min_bin, max_bin, step):
@@ -63,29 +68,28 @@ def onehot_range(arr, min_bin : float, max_bin : float, step : float) -> dict:
     return onehot_dict
 
 
-def gtdb_taxonomy_to_tuple(taxstring : str) -> dict:
+def gtdb_taxonomy_to_tuple(taxstring: str) -> dict:
     """Convert GTDB taxstring to a dictionary.
-    
+
     Args:
-        taxstring: A GTDB taxstring in the following format: 
+        taxstring: A GTDB taxstring in the following format:
             d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;...
     Returns:
-        taxonomy_dict: A dictionary is keyed by the following ranks: domain, phylum, class, 
+        taxonomy_dict: A dictionary is keyed by the following ranks: domain, phylum, class,
             order, family, genus, and species.
     """
-    ABBREV = {'d' : 'domain', 'p' : 'phylum', 'c' : 'class', 'o' : 'order', 'f' : 'family' , 'g' : 'genus', 's' : 'species'}
-    
+    ABBREV = {"d": "domain", "p": "phylum", "c": "class", "o": "order", "f": "family", "g": "genus", "s": "species"}
+
     levels = []
     names = []
-    for level in taxstring.strip().split(';'):
-        abbrev, taxon = level.split('__')
+    for level in taxstring.strip().split(";"):
+        abbrev, taxon = level.split("__")
         levels.append(ABBREV[abbrev])
         names.append(taxon)
     return tuple(levels), tuple(names)
 
-def gtdb_accession_to_ncbi(accession : str, 
-                           make_genbank : bool = True, 
-                           remove_version : bool = True) -> str:
+
+def gtdb_accession_to_ncbi(accession: str, make_genbank: bool = True, remove_version: bool = True) -> str:
     """Convert GTDB 'accession' into NCBI accession.
 
     Options allow different formats.
@@ -100,8 +104,7 @@ def gtdb_accession_to_ncbi(accession : str,
 
     ncbi_accession = accession[3:]
     if make_genbank:
-        ncbi_accession = ncbi_accession.replace('GCF_', 'GCA_')
+        ncbi_accession = ncbi_accession.replace("GCF_", "GCA_")
     if remove_version:
         ncbi_accession = ncbi_accession[:-2]
     return ncbi_accession
-    

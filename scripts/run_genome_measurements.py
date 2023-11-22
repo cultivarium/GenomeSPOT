@@ -35,12 +35,17 @@ def create_mapping_inputs(directory, suffix_fna, suffix_faa, output_dir) -> list
     missing_faas = []
     type_dict = json.loads(open(ORGANISM_TYPE_DICT).read())
 
-    logger.info("Looking for {} and {} files in {}".format(suffix_fna, suffix_faa, directory))
+    logger.info(
+        "Looking for {} and {} files in {}".format(suffix_fna, suffix_faa, directory)
+    )
     fna_pathlists = {
-        genome_accession_from_fasta_path(str(path)): path for path in Path(directory).rglob("*{}".format(suffix_fna))
+        genome_accession_from_fasta_path(str(path)): path
+        for path in Path(directory).rglob("*{}".format(suffix_fna))
     }
     faa_pathlists = {
-        genome_accession_from_fasta_path(str(path)): path for path in Path(directory).rglob("*{}".format(suffix_faa))
+        # FIX THIS [3:]
+        genome_accession_from_fasta_path(str(path)[3:]): path
+        for path in Path(directory).rglob("*{}".format(suffix_faa))
     }
     for genome, fna_path in fna_pathlists.items():
         faa_path = faa_pathlists.get(genome, None)
@@ -65,13 +70,16 @@ def genome_accession_from_fasta_path(path: str):
     `path/to/ALPHA_NUMERIC.#_OTHER_INFORMATION.blah`
     """
     filename = path.split("/")[-1]
-    accession = filename.split(".")[0] + filename.split(".")[1].split("_")[0]
+    accession = filename.split(".")[0]
+    if accession[2] == "_":
+        accession = accession[3:]
     return accession
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="RunGenomeMeasurements", description="Run measure genomes on many genomes in parallel"
+        prog="RunGenomeMeasurements",
+        description="Run measure genomes on many genomes in parallel",
     )
 
     parser.add_argument(
@@ -79,17 +87,30 @@ if __name__ == "__main__":
         "--directory",
         help="Path to directory containing subdirectories each with one genome FASTA and one protein FASTA",
     )
-    parser.add_argument("-sfaa", default=".faa.gz", help="Suffix of protein FASTA files, default .faa.gz")
-    parser.add_argument("-sfna", default=".fna.gz", help="Suffix of genome FASTA files, default .fna.gz")
     parser.add_argument(
-        "-o", "--output-dir", help="Output directory to populate with files <genome_accession>.features.json"
+        "-sfaa",
+        default=".faa.gz",
+        help="Suffix of protein FASTA files, default .faa.gz",
     )
-    parser.add_argument("-p", default=4, help="Number of parallel processes", required=False)
+    parser.add_argument(
+        "-sfna", default=".fna.gz", help="Suffix of genome FASTA files, default .fna.gz"
+    )
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        help="Output directory to populate with files <genome_accession>.features.json",
+    )
+    parser.add_argument(
+        "-p", default=4, help="Number of parallel processes", required=False
+    )
 
     args = parser.parse_args()
 
     input_list = create_mapping_inputs(
-        args.directory, suffix_fna=args.sfna, suffix_faa=args.sfaa, output_dir=args.output_dir
+        args.directory,
+        suffix_fna=args.sfna,
+        suffix_faa=args.sfaa,
+        output_dir=args.output_dir,
     )
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
 

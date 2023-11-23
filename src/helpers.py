@@ -2,6 +2,7 @@
 
 from collections import Counter
 from itertools import groupby
+
 from typing import IO, Tuple
 
 import numpy as np
@@ -78,7 +79,15 @@ def gtdb_taxonomy_to_tuple(taxstring: str) -> dict:
         taxonomy_dict: A dictionary is keyed by the following ranks: domain, phylum, class,
             order, family, genus, and species.
     """
-    ABBREV = {"d": "domain", "p": "phylum", "c": "class", "o": "order", "f": "family", "g": "genus", "s": "species"}
+    ABBREV = {
+        "d": "domain",
+        "p": "phylum",
+        "c": "class",
+        "o": "order",
+        "f": "family",
+        "g": "genus",
+        "s": "species",
+    }
 
     levels = []
     names = []
@@ -89,7 +98,9 @@ def gtdb_taxonomy_to_tuple(taxstring: str) -> dict:
     return tuple(levels), tuple(names)
 
 
-def gtdb_accession_to_ncbi(accession: str, make_genbank: bool = True, remove_version: bool = True) -> str:
+def gtdb_accession_to_ncbi(
+    accession: str, make_genbank: bool = True, remove_version: bool = True
+) -> str:
     """Convert GTDB 'accession' into NCBI accession.
 
     Options allow different formats.

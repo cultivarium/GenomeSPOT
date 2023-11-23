@@ -1,7 +1,7 @@
 import joblib
 import numpy as np
 
-TRAINED_MODEL = "../hmm/hmm_signal_peptide.joblib"
+TRAINED_MODEL = "hmm/hmm_signal_peptide.joblib"
 SYMBOLS = [
     "A",
     "C",

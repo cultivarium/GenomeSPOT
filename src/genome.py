@@ -31,20 +31,18 @@ from signal_peptide import SignalPeptideHMM
 class Genome:
     def __init__(
         self,
-        protein_filepath: Path,
-        contig_filepath: Path,
+        contig_filepath: str,
+        protein_filepath: str,
     ):
-        self.faa_filepath = str(protein_filepath)
         self.fna_filepath = str(contig_filepath)
-        self.prefix = ".".join(self.faa_filepath.split("/")[-1].split(".")[:-1])
+        self.faa_filepath = str(protein_filepath)
+        if Path(self.fna_filepath).exists() is False:
+            raise ValueError(f"Input file {self.fna_filepath} does not exist")
+        if Path(self.faa_filepath).exists() is False:
+            raise ValueError(f"Input file {self.faa_filepath} does not exist")
+        self.prefix = self.fna_filepath.split("/")[-1]
         self._protein_data = None
         self._protein_localization = None
-
-    def _length_weighted_average(self, values, lengths):
-        return float(
-            np.sum([length * val for length, val in zip(lengths, values)])
-            / np.sum(lengths)
-        )
 
     def protein_data(self):
         """
@@ -138,6 +136,12 @@ class Genome:
                 )
 
         return protein_statistics
+
+    def _length_weighted_average(self, values, lengths):
+        return float(
+            np.sum([length * val for length, val in zip(lengths, values)])
+            / np.sum(lengths)
+        )
 
     def protein_localization(self):
         """Localizes proteins to inside/outside/within the cell membrane.
@@ -255,34 +259,3 @@ class Genome:
             self.genomic_statistics["diff_extra_intra"][key] = val_extra - val_intra
 
         return self.genomic_statistics
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="MeasureGenome", description="Computes statistics from a genome"
-    )
-
-    parser.add_argument("-c", "--contigs", help="Path to a gzipped FASTA of contigs")
-    parser.add_argument("-p", "--proteins", help="Path toa gzipped FASTA of proteins")
-    parser.add_argument(
-        "-t",
-        "--organism-type",
-        help="Type of organism {gramn/gramp/arch}; if arch defaults to gramp",
-    )
-    parser.add_argument(
-        "-o", "--output", help="Output file name, default <genome_prefix>.json"
-    )
-
-    args = parser.parse_args()
-
-    if args.output:
-        output = str(args.output)
-    else:
-        output = ".".join(str(args.contigs).split(".")[:-1]) + ".json"
-
-    genome_features = Genome(
-        protein_filepath=args.proteins,
-        contig_filepath=args.contigs,
-    ).genome_metrics()
-
-    json.dump(genome_features, open(output, "w"))

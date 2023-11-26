@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
 
-"""Classes to compute info about nucleotide sequences.
+"""Class to compute info about nucleotide sequences.
 
 Examples include nucleotide frequency.
-
-Typical usage:
-
-    dna_calc = DNA(dna)
-    dna_metrics = DNA.nucleotide_metrics() # all metrics
-    kmer_freqs = DNA.count_canonical_kmers(k=1) # k-mer frequency
 """
 from collections import defaultdict
 from itertools import product
-
-import numpy as np
 
 from helpers import count_kmers
 
@@ -23,7 +15,9 @@ class DNA:
 
     Typical usage:
     ```
-    dna_metrics = DNA(dna).nucleotide_metrics()
+    dna_calc = DNA(dna)
+    dna_metrics = DNA.nucleotide_metrics() # all metrics
+    kmer_freqs = DNA.count_canonical_kmers(k=1) # k-mer frequency
     ```
     """
 

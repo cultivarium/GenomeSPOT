@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
 
-"""Classes to compute info about primary sequences of proteins.
+"""Class to compute info about primary sequences of proteins.
 
 Information about primary sequences refers to what can be learned from 
 the sequence alone independent of the gene's function or secondary or 
 tertiary structure, for example the proportion of residues that are 
 acidic.
-
-Typical usage:
-
-    protein_calc = Protein(protein_sequence)
-    protein_metrics = protein_calc.protein_metrics() # all metrics
-    pi = protein_calc.isoelectric_point() # individual metric
 """
 
 from collections import defaultdict
@@ -35,7 +29,9 @@ class Protein:
 
     Typical usage:
     ```
-    protein_metrics = Protein(protein_sequence).protein_metrics()
+    protein_calc = Protein(protein_sequence)
+    protein_metrics = protein_calc.protein_metrics() # all metrics
+    pi = protein_calc.isoelectric_point() # individual metric
     ```
     """
 
@@ -270,8 +266,6 @@ class Protein:
 
         # Must prepend with "aa_" because code overlaps with nts
         for aa, count in self.aa_1mer_frequencies().items():  # 20 variables
-            sequence_metrics["aa_{}".format(aa)] = count
-        for aa, count in self.aa_2mer_frequencies().items():  # 400 variables
             sequence_metrics["aa_{}".format(aa)] = count
 
         return sequence_metrics

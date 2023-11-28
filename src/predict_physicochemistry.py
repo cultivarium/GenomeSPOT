@@ -1,17 +1,15 @@
 import argparse
-from datetime import datetime
 from collections import defaultdict
 import joblib
 import json
 import logging
 from pathlib import Path
-import sys
 
 import numpy as np
 import pandas as pd
 
 from genome import Genome
-from train_models import load_instructions
+from model_training.train_models import load_instructions
 
 # Used to bound predictions to sensical values/ranges from training
 PREDICTION_BOUNDS = {
@@ -20,6 +18,8 @@ PREDICTION_BOUNDS = {
     "salinity": (0, 37),
     "oxygen": (0, 1),
 }
+
+ROOT_DIR = str(Path().resolve().parent)
 
 
 def genome_features_to_input_arr(features: list, genome_features: dict) -> np.array:
@@ -66,7 +66,7 @@ def predict_target_value(X, target: np.array, method="predict") -> dict:
         prediction_dict: Dict containing the predicted value and upper and lower limit
             of confidence intervals
     """
-    model = joblib.load(f"models/{target}.joblib")
+    model = joblib.load(f"{ROOT_DIR}/models/{target}.joblib")
     if method == "predict":
         y_pred = model.predict(X)[0]
     elif method == "predict_proba":
@@ -244,7 +244,7 @@ if __name__ == "__main__":
         faa_path=args.proteins,
         features_json=args.features_json,
         skip_prediction=args.skip_prediction,
-        instructions_filename="models/instructions.json",
+        instructions_filename=f"{ROOT_DIR}/models/instructions.json",
     )
 
     if args.output is not None and args.save_genome_features is True:

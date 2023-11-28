@@ -16,6 +16,13 @@ setup(
     packages=find_packages(exclude=["tests"]),
     scripts=["src/"],
     python_requires=">=3.8.16",
-    install_requires=[],
+    install_requires=[
+        "biopython>=1.81",
+        "hmmlearn>=0.3.0",
+        "scikit-learn>=1.2.2",
+        "numpy>=1.23.5",
+        "pandas>=1.5.3",
+        "bacdive>=0.2",
+    ],
     zip_safe=False,
 )

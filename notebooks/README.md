@@ -1,6 +1,6 @@
 # Scientific Notebooks
 
-This directory contains notebooks use to create models and figures for the publication Barnum et. al 2020
+In addition to a tutorial notebook `tutorial.ipynb` to acquaint the reader with code in this package, this directory contains notebooks use to create models and figures from the publication:
 
 - `prepare_training_data.ipynb`
 - `train_models.ipynb`

@@ -13,20 +13,17 @@ Install package:
 pip install -r requirements.txt
 ```
 
-Requirements for use:
-```
-biopython
-ncbi-genome-download
-scikitlearn
-hmmlearn
-numpy
-pandas
-```
+Requirements:
+- biopython>=1.81
+- hmmlearn>=0.3.0
+- scikit-learn>=1.2.2
+- numpy>=1.23.5
+- pandas>=1.5.3
+- bacdive>=0.2 (only used in model training)
 
-Requirements only for model training:
-```
-bacdive
-```
+Recommended:
+- ncbi-genome-download ([github.com/kblin/ncbi-genome-download](https://github.com/kblin/ncbi-genome-download)) for downloading genomes from GenBank
+- prodigal ([github.com/hyattpd/Prodigal](https://github.com/hyattpd/Prodigal)) for predicting protein sequences from genomes
 
 ## 2. Run prediction
 
@@ -67,7 +64,7 @@ Here is the output for the test genome:
 - The user provides a genome sequence and protein sequences in FASTA format. Protein prediction is not performed by this package because it would multiply the runtime.
 - Features of sequences in the genome are calculated by `Genome` using the classes `Protein` and `DNA`
 - A pretrained model for each condition (optimum temperature, minimum temperature, etc.) estimates the condition from the genome features
-- Model training is discussed in a separate section (see: Model training and evaluation), but a couple functions exist to demonstrate the functions used to balance the data phylogenetically
+- Model training is discussed in a separate section (see: Model training and evaluation), but a couple functions exist in the tutortial to demonstrate the functions used to balance the data phylogenetically
 
 # Key considerations
 

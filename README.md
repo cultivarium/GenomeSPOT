@@ -6,7 +6,13 @@ Reference:
 > (reference)
 
 # Quick start
-## 1. Install requirements
+## 1. Install package
+
+Install package:
+```
+pip install -r requirements.txt
+```
+
 Requirements for use:
 ```
 biopython
@@ -22,17 +28,17 @@ Requirements only for model training:
 bacdive
 ```
 
-
 ## 2. Run prediction
 
 ```shell
-pip install -r requirements.txt
 python src/predict_physicochemistry.py # flags ~#s/genome/CPU
 ```
-Hint: use prodigal for predicting protein FASTA sequences from genomes
+Hint: if you only have a genome and need a protein FASTA, use prodigal. 
 
 ```shell
+gunzip genome.fna.gz
 prodigal -i genome.fna -a protein.faa # get proteins, ~#s/genome/CPU
+gzip genome.fna
 ```
 
 Hint: for thousands of genomes, run in parallel using:
@@ -58,7 +64,7 @@ Here is the output for the test genome:
 
 `tutorial.ipynb` provides an interactions demonstration of modules in this repo. Briefly:
 
-- The user provides a genome sequence and protein sequences in FASTA format
+- The user provides a genome sequence and protein sequences in FASTA format. Protein prediction is not performed by this package because it would multiply the runtime.
 - Features of sequences in the genome are calculated by `Genome` using the classes `Protein` and `DNA`
 - A pretrained model for each condition (optimum temperature, minimum temperature, etc.) estimates the condition from the genome features
 - Model training is discussed in a separate section (see: Model training and evaluation), but a couple functions exist to demonstrate the functions used to balance the data phylogenetically

@@ -13,6 +13,14 @@ import pandas as pd
 from genome import Genome
 from train_models import load_instructions
 
+# Used to bound predictions to sensical values/ranges from training
+PREDICTION_BOUNDS = {
+    "temperature": (0, 105),
+    "ph": (0.5, 14),
+    "salinity": (0, 37),
+    "oxygen": (0, 1),
+}
+
 
 def genome_features_to_input_arr(features: list, genome_features: dict) -> np.array:
     """Creates an array that can be used as input for predictions.
@@ -63,6 +71,18 @@ def predict_target_value(X, target: np.array, method="predict") -> dict:
         y_pred = model.predict(X)[0]
     elif method == "predict_proba":
         y_pred = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
+
+    # Constrain within allowed values
+    min_pred, max_pred = PREDICTION_BOUNDS[target.split("_")[0]]
+    if y_pred < min_pred:
+        y_pred = min_pred
+        warning = "min_exceeded"
+    elif y_pred > max_pred:
+        y_pred = max_pred
+        warning = "max_exceeded"
+    else:
+        warning = None
+
     # TO-DO: compute confidence intervals
     lower_ci = None
     upper_ci = None
@@ -70,6 +90,7 @@ def predict_target_value(X, target: np.array, method="predict") -> dict:
         "value": y_pred,
         "lower_ci": lower_ci,
         "upper_ci": upper_ci,
+        "warning": warning,
     }
     return prediction_dict
 

@@ -1,5 +1,9 @@
 """
-Uses phylogeny to partition a dataset.
+Classes to perform operations on a taxonomic basis:
+
+    - TaxonomyGTDB: taxonomy helper
+    - BalanceTaxa: balances a dataset using taxonomy
+    - PartitionTaxa: partitions a dataset using taxonomy
 """
 
 from collections import defaultdict, Counter
@@ -18,6 +22,14 @@ class TaxonomyGTDB:
     """
     Class for taxonomy operations using the taxonomy
     from the Genome Taxonomy Database (gtdb.ecogenomic.org/)
+
+    Typical usage:
+        ```
+        from taxonomy import TaxonomyGTDB
+        taxonomy = TaxonomyGTDB()
+        genome_taxonomy = taxonomy.taxonomy_dict['GCA_000979555']
+        taxon = taxonomy.taxa_of_genomes(['GCA_000979555', 'GCA_017565965'], 'family')
+        ```
 
     Args:
         taxonomy_filenames: list of taxonomy files. If not provided,
@@ -181,6 +193,18 @@ class BalanceTaxa:
     randomly chosen with a higher likelihood of being chosen inversely
     proportional to the bias for that taxon in the dataset compared to the
     supplied taxonomic reference.
+
+    Typical usage:
+        ```
+        from taxonomy import BalanceTaxa, TaxonomyGTDB
+        taxonomy = TaxonomyGTDB()
+        balancer = BalanceTaxa(taxonomy=taxonomy)
+        balanced_genomes = balancer.balance_dataset(
+            genomes=genomes,
+            proportion_to_keep=0.5,
+            diversity_rank="species"
+        )
+        ```
     """
 
     def __init__(
@@ -328,6 +352,21 @@ class PartitionTaxa:
     in the partition - none will not be partitioned. Partitioning is
     done randomly yet reproducibly.
 
+    Typical usage:
+        ```
+        from taxonomy import PartitionTaxa, TaxonomyGTDB
+
+        taxonomy = TaxonomyGTDB()
+        partitioner = PartitionTaxa(
+            taxonomy=taxonomy,
+            partition_rank='family',
+            iteration_rank='phylum',
+            diversity_rank='genus',
+        )
+        partitioned_genomes = partitioner.partition(balanced_genomes, partition_size=0.2)
+        nonpartitioned_genomes = set(balanced_genomes).difference(partitioned_genomes)
+        extended_partitioned_genomes = partitioner.find_relatives_of_partitioned_set_in_reference(partitioned_genomes)
+        ```
     Args:
         partition_rank: taxonomic rank at which to separate taxa into partitions, e.g. "family",
         iteration_rank: taxonomic rank at which to iteratively sample over, to make sure

@@ -15,15 +15,10 @@ import argparse
 import json
 import logging
 from typing import Tuple
-import argparse
-import json
-import logging
 import re
 
 import bacdive
 import numpy as np
-
-from helpers import onehot_range
 
 
 class QueryBacDive:
@@ -433,7 +428,12 @@ class ComputeBacDiveTraits:
         arr, min_bin: float, max_bin: float, step: float, prefix: str
     ) -> dict:
         """Return onehot ranges formatted with prefixes"""
-        onehot_dict = onehot_range(arr=arr, min_bin=min_bin, max_bin=max_bin, step=step)
+        onehot_dict = {}
+        for bin_floor in np.arange(min_bin, max_bin, step):
+            if min(arr, default=-1000) <= bin_floor <= max(arr, default=-1000):
+                onehot_dict[str(bin_floor)] = 1
+            else:
+                onehot_dict[str(bin_floor)] = 0
         return {f"{prefix}_{k}": v for k, v in onehot_dict.items()}
 
     def onehot_oxygen_tolerance(self) -> dict:

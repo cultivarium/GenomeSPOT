@@ -1,15 +1,16 @@
+#!/usr/bin/env python3
+
 import argparse
 from collections import defaultdict
-import joblib
 import json
 import logging
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 
 from genome import Genome
-from model_training.train_models import load_instructions
 
 # Used to bound predictions to sensical values/ranges from training
 PREDICTION_BOUNDS = {
@@ -20,6 +21,13 @@ PREDICTION_BOUNDS = {
 }
 
 ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+
+
+def load_instructions(instructions_filename: str):
+    """Load pipeline and features stored in instruction file"""
+    with open(instructions_filename) as fh:
+        instructions = json.loads(fh.read())
+    return instructions
 
 
 def genome_features_to_input_arr(features: list, genome_features: dict) -> np.array:

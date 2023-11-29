@@ -1,30 +1,18 @@
-#!/usr/bin/env python3
-
 """
 Measures properties of a genome (fasta + protein-fasta).
-
-Example usage:
-
-```shell
-python3 measure_genome.py -t arch -c data/genomes/genbank/archaea/GCA_000007185.1/GCA_000007185.1_ASM718v1_genomic.fna.gz -p data/genomes/genbank/archaea/GCA_000007185.1/GCA_000007185.1_ASM718v1_protein.faa.gz 
-```
 """
 
-import argparse
 from collections import defaultdict
 import gzip
 import io
-import joblib
-import json
 import logging
 from pathlib import Path
-import subprocess as sp
 
 import numpy as np
 
+from dna import DNA
 from helpers import fasta_iter
 from protein import Protein
-from dna import DNA
 from signal_peptide import SignalPeptideHMM
 
 

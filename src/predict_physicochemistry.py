@@ -19,7 +19,7 @@ PREDICTION_BOUNDS = {
     "oxygen": (0, 1),
 }
 
-ROOT_DIR = str(Path().resolve().parent)
+ROOT_DIR = str(Path(__file__).resolve().parent.parent)
 
 
 def genome_features_to_input_arr(features: list, genome_features: dict) -> np.array:
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if (args.c is None or args.p is None) and args.g is None:
+    if (args.contigs is None or args.proteins is None) and args.genome_features is None:
         raise ValueError(
             """User must provide either files for contigs and 
             proteins or a precomputed genome features file"""
@@ -242,17 +242,17 @@ if __name__ == "__main__":
     predictions, genome_features = predict_physicochemistry(
         fna_path=args.contigs,
         faa_path=args.proteins,
-        features_json=args.features_json,
+        features_json=args.genome_features,
         skip_prediction=args.skip_prediction,
         instructions_filename=f"{ROOT_DIR}/models/instructions.json",
     )
 
-    if args.output is not None and args.save_genome_features is True:
-        intermediate_output = str(args.output) + ".features.json"
+    if args.output_prefix is not None and args.save_genome_features is True:
+        intermediate_output = str(args.output_prefix) + ".features.json"
         logging.info("Saving intermediate to %s", intermediate_output)
         json.dump(genome_features, open(intermediate_output, "w", encoding="utf-8"))
-    if args.output is not None and predictions is not None:
-        output = str(args.output) + ".predictions.tsv"
+    if args.output_prefix is not None and predictions is not None:
+        output = str(args.output_prefix) + ".predictions.tsv"
         logging.info("Saving output to: %s", output)
         save_predictions(predictions, output_tsv=output)
 

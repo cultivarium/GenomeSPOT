@@ -28,13 +28,13 @@ Recommended:
 ## 2. Run prediction
 
 ```shell
-python src/predict_physicochemistry.py # flags ~#s/genome/CPU
+python src/predict_physicochemistry.py -c tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz -p tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz -o test.predictions.tsv
 ```
 Hint: if you only have a genome and need a protein FASTA, use prodigal. 
 
 ```shell
-gunzip genome.fna.gz
-prodigal -i genome.fna -a protein.faa # get proteins, ~#s/genome/CPU
+gunzip genome.fna.gz # requires unzip
+prodigal -i genome.fna -a protein.faa # get proteins
 gzip genome.fna
 ```
 
@@ -54,6 +54,17 @@ Each prediction (e.g. optimum temperature) has:
 Here is the output for the test genome:
 
 ```
+                         value  lower_ci  upper_ci  warning
+temperature_optimum  27.934813       NaN       NaN      NaN
+temperature_max      35.297075       NaN       NaN      NaN
+temperature_min      15.892330       NaN       NaN      NaN
+ph_optimum            7.244327       NaN       NaN      NaN
+ph_max                8.734173       NaN       NaN      NaN
+ph_min                5.374512       NaN       NaN      NaN
+salinity_optimum      4.434118       NaN       NaN      NaN
+salinity_max          7.258816       NaN       NaN      NaN
+salinity_min          2.509730       NaN       NaN      NaN
+oxygen                0.981243       NaN       NaN      NaN
 ```
 
 
@@ -78,6 +89,7 @@ Here is the output for the test genome:
 Users may be interested in replicating this work using the provided modules and scientific notebooks.
 
 ## Download data for training
+
 ```shell
 # Download BacDive data
 vi .bacdive_credentials # username on line 1, password on line 2
@@ -98,6 +110,5 @@ gunzip data/references/*tsg.gz
 ## Prepare data
 
 ## Train models and select best model with cross-validation
-
 
 ## Produce final model on all data

@@ -41,32 +41,27 @@ def count_kmers(sequence: str, k: int) -> dict:
     return dict(kmers_count)
 
 
-def nonnull(list_: list):
-    """Returns array without NaN values"""
-    X = np.array(list_)
-    return X[~np.isnan(X)]
+def gtdb_accession_to_ncbi(
+    accession: str, make_genbank: bool = True, remove_version: bool = True
+) -> str:
+    """Convert GTDB 'accession' into NCBI accession.
 
+    Options allow different formats.
 
-def bin_midpoints(data: np.array, bins: np.array):
-    """Returns counts per bin keyed by bin midpoint"""
-    bin_counts = []
-    bin_midpoints = []
-    counts = Counter(np.digitize(data, bins))
-    for bin_idx in range(len(bins) - 1):
-        bin_counts.append(counts.get(bin_idx, 0))
-        bin_midpoints.append(round(np.mean([bins[bin_idx], bins[bin_idx + 1]]), 3))
-    return dict(zip(bin_midpoints, bin_counts))
+    Args:
+        accession: GTDB accession e.g. RS_GCF_016456235.1
+        make_genbank: Replace the initial 'GCF_' with 'GCA_'
+        remove_version: Remove the terminal '.#'
+    Returns:
+        ncbi_accession : NCBI accession e.g. GCA_016456235
+    """
 
-
-def onehot_range(arr, min_bin: float, max_bin: float, step: float) -> dict:
-    """Returns a dictionary of presence or absence in a bin"""
-    onehot_dict = {}
-    for bin_floor in np.arange(min_bin, max_bin, step):
-        if min(arr, default=-1000) <= bin_floor <= max(arr, default=-1000):
-            onehot_dict[str(bin_floor)] = 1
-        else:
-            onehot_dict[str(bin_floor)] = 0
-    return onehot_dict
+    ncbi_accession = accession[3:]
+    if make_genbank:
+        ncbi_accession = ncbi_accession.replace("GCF_", "GCA_")
+    if remove_version:
+        ncbi_accession = ncbi_accession[:-2]
+    return ncbi_accession
 
 
 def gtdb_taxonomy_to_tuple(taxstring: str) -> dict:
@@ -96,26 +91,3 @@ def gtdb_taxonomy_to_tuple(taxstring: str) -> dict:
         levels.append(ABBREV[abbrev])
         names.append(taxon)
     return tuple(levels), tuple(names)
-
-
-def gtdb_accession_to_ncbi(
-    accession: str, make_genbank: bool = True, remove_version: bool = True
-) -> str:
-    """Convert GTDB 'accession' into NCBI accession.
-
-    Options allow different formats.
-
-    Args:
-        accession: GTDB accession e.g. RS_GCF_016456235.1
-        make_genbank: Replace the initial 'GCF_' with 'GCA_'
-        remove_version: Remove the terminal '.#'
-    Returns:
-        ncbi_accession : NCBI accession e.g. GCA_016456235
-    """
-
-    ncbi_accession = accession[3:]
-    if make_genbank:
-        ncbi_accession = ncbi_accession.replace("GCF_", "GCA_")
-    if remove_version:
-        ncbi_accession = ncbi_accession[:-2]
-    return ncbi_accession

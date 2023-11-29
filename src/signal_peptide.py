@@ -1,7 +1,10 @@
 import joblib
 import numpy as np
+from pathlib import Path
 
-TRAINED_MODEL = "../hmm/hmm_signal_peptide.joblib"
+ROOT_DIR = str(Path(__file__).resolve().parent.parent)
+
+TRAINED_MODEL = f"{ROOT_DIR}/hmm/hmm_signal_peptide.joblib"
 SYMBOLS = [
     "A",
     "C",

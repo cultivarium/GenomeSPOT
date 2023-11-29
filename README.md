@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 Requirements:
 - hmmlearn==0.3.0
-- scikit-learn-=1.2.2
+- scikit-learn==1.2.2
 - biopython>=1.81
 - numpy>=1.23.5
 - pandas>=1.5.3
@@ -46,7 +46,7 @@ Hint: for thousands of genomes, run in parallel using:
 ```
 
 
-## 3. Intrepret output
+## 3. Interpret output
 
 Each prediction (e.g. optimum temperature) has: 
 - **A predicted value**: For oxygen, the predicted value is a probability of oxygen tolerance between [0,1]. For continuous variables, values are in the units C for temperature, %w/v sodium chloride for salinity, and standard units for pH. 
@@ -91,6 +91,8 @@ oxygen                0.981243       NaN       NaN      NaN
 Users may be interested in replicating this work using the provided modules and scientific notebooks.
 
 ## Download data for training
+
+NOTE: this takes a long time.
 
 ```shell
 # Download BacDive data

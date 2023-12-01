@@ -7,11 +7,15 @@ import io
 import logging
 from collections import defaultdict
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
 from dna import DNA
-from helpers import fasta_iter
-from protein import Protein
+from helpers import iterate_fasta
+from protein import (
+    DIFF_HYDROPHOBICITY_MEMBRANE,
+    Protein,
+)
 from signal_peptide import SignalPeptideHMM
 
 
@@ -46,7 +50,7 @@ class Genome:
             else:
                 fh = open(self.faa_filepath, "r")
             fh.seek(0)
-            for header, sequence in fasta_iter(fh):
+            for header, sequence in iterate_fasta(fh):
                 protein_id = header.split(" ")[0]
                 self._protein_data[protein_id] = Protein(
                     protein_sequence=sequence,
@@ -55,7 +59,7 @@ class Genome:
             fh.close()
         return self._protein_data
 
-    def compute_protein_statistics(self, subset_proteins: set = None) -> dict:
+    def compute_protein_statistics(self, subset_proteins: set = None) -> Dict[str, float]:
         """
         Returns a dictionary of genome-wide statistics, based on
         measurements, to be used for downstream analyses
@@ -88,7 +92,6 @@ class Genome:
             ) / len(pis)
 
         # means
-
         protein_statistics["mean_pi"] = float(np.mean(pis))
         protein_statistics["mean_gravy"] = float(np.mean(values_dict["gravy"]))
         protein_statistics["mean_zc"] = float(np.mean(values_dict["zc"]))
@@ -115,7 +118,7 @@ class Genome:
     def _length_weighted_average(self, values, lengths):
         return float(np.sum([length * val for length, val in zip(lengths, values)]) / np.sum(lengths))
 
-    def protein_localization(self):
+    def assign_localization(self):
         """Localizes proteins to inside/outside/within the cell membrane.
 
         Extracellular proteins are identified with a signal peptide prediction
@@ -129,8 +132,6 @@ class Genome:
         """
 
         if self._protein_localization is None:
-            # exported_proteins = _get_exported_proteins_with_deepsig(self.faa_filepath, self.organism_type)
-            # self.exported_proteins = exported_proteins
             mean_hydrophobicity = np.mean(
                 [v["gravy"] for k, v in self.protein_data().items() if v["gravy"] is not None]
             )
@@ -138,7 +139,7 @@ class Genome:
             self._protein_localization = {}
             for protein in self.protein_data().keys():
                 hydrophobicity = self.protein_data()[protein]["gravy"]
-                if (hydrophobicity - mean_hydrophobicity) >= Protein.DIFF_HYDROPHOBICITY_MEMBRANE:
+                if (hydrophobicity - mean_hydrophobicity) >= DIFF_HYDROPHOBICITY_MEMBRANE:
                     self._protein_localization[protein] = "membrane"
                 else:
                     # Get localization
@@ -161,7 +162,7 @@ class Genome:
             fh = open(self.fna_filepath, "r")
         fh.seek(0)
         genome = ""
-        for header, sequence in fasta_iter(fh):
+        for header, sequence in iterate_fasta(fh):
             genome += "NN" + sequence
         fh.close()
 
@@ -169,7 +170,7 @@ class Genome:
         genome_statistics.update(nucleotide_calc.nucleotide_metrics())
         return genome_statistics
 
-    def genome_metrics(self) -> dict:
+    def measure_genome_features(self) -> Dict[str, dict]:
         """
         Computes statistics about the proteome for each genome on:
         1. All proteins, keyed by 'all'
@@ -179,7 +180,7 @@ class Genome:
         self.genomic_statistics = {}
 
         logging.info("{}: Identifying protein localization".format(self.prefix))
-        localization = self.protein_localization()
+        localization = self.assign_localization()
         extracellular_soluble = {protein for protein, locale in localization.items() if locale == "extra_soluble"}
         intracellular_soluble = {protein for protein, locale in localization.items() if locale == "intra_soluble"}
         membrane = {protein for protein, locale in localization.items() if locale == "membrane"}

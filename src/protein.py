@@ -6,13 +6,114 @@ tertiary structure, for example the proportion of residues that are
 acidic.
 """
 
-from collections import defaultdict
-from itertools import product
+from typing import Dict
 
 import numpy as np
 from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
 from helpers import count_kmers
 from signal_peptide import SignalPeptideHMM
+
+
+STANDARD_AMINO_ACIDS = {
+    "A",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "N",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "V",
+    "W",
+    "Y",
+}
+
+# citation:
+NH2O_RQEC = {
+    "A": 0.369,
+    "C": -0.025,
+    "D": -0.122,
+    "E": -0.107,
+    "F": -2.568,
+    "G": 0.478,
+    "H": -1.825,
+    "I": 0.660,
+    "K": 0.763,
+    "L": 0.660,
+    "M": 0.046,
+    "N": -0.122,
+    "P": -0.354,
+    "Q": -0.107,
+    "R": 0.072,
+    "S": 0.575,
+    "T": 0.569,
+    "V": 0.522,
+    "W": -4.087,
+    "Y": -2.499,
+}
+
+# citation:
+WEIGHTED_ZC = {
+    "A": 0,
+    "C": 2.0,
+    "D": 4,
+    "E": 2.0,
+    "F": -4.0,
+    "G": 2,
+    "H": 4.0,
+    "I": -6,
+    "K": 4.0,
+    "L": -6,
+    "M": -1.6,
+    "N": 4,
+    "P": -2.0,
+    "Q": 2.0,
+    "R": 2.0,
+    "S": 1.98,
+    "T": 0,
+    "V": -4.0,
+    "W": -2.0,
+    "Y": -2.0,
+}
+
+# Kyte & Doolittle 1982
+HYDROPHOBICITY = {
+    "A": 1.8,
+    "R": -4.5,
+    "N": -3.5,
+    "D": -3.5,
+    "C": 2.5,
+    "Q": -3.5,
+    "E": -3.5,
+    "G": -0.4,
+    "H": -3.2,
+    "I": 4.5,
+    "L": 3.8,
+    "K": -3.9,
+    "M": 1.9,
+    "F": 2.8,
+    "P": -1.6,
+    "S": -0.8,
+    "T": -0.7,
+    "W": -0.9,
+    "Y": -1.3,
+    "V": 4.2,
+}
+
+# Membrane protein GRAVY is usually >+0.5 the average GRAVY
+# Kyte & Doolittle 1982
+DIFF_HYDROPHOBICITY_MEMBRANE = 0.5
+
+THERMOSTABLE_RESIDUES = {"I", "V", "Y", "W", "R", "E", "L"}
 
 
 class Protein:
@@ -31,107 +132,6 @@ class Protein:
     pi = protein_calc.isoelectric_point() # individual metric
     ```
     """
-
-    STANDARD_AMINO_ACIDS = {
-        "A",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "K",
-        "L",
-        "M",
-        "N",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "V",
-        "W",
-        "Y",
-    }
-
-    # citation:
-    NH2O_RQEC = {
-        "A": 0.369,
-        "C": -0.025,
-        "D": -0.122,
-        "E": -0.107,
-        "F": -2.568,
-        "G": 0.478,
-        "H": -1.825,
-        "I": 0.660,
-        "K": 0.763,
-        "L": 0.660,
-        "M": 0.046,
-        "N": -0.122,
-        "P": -0.354,
-        "Q": -0.107,
-        "R": 0.072,
-        "S": 0.575,
-        "T": 0.569,
-        "V": 0.522,
-        "W": -4.087,
-        "Y": -2.499,
-    }
-
-    # citation:
-    WEIGHTED_ZC = {
-        "A": 0,
-        "C": 2.0,
-        "D": 4,
-        "E": 2.0,
-        "F": -4.0,
-        "G": 2,
-        "H": 4.0,
-        "I": -6,
-        "K": 4.0,
-        "L": -6,
-        "M": -1.6,
-        "N": 4,
-        "P": -2.0,
-        "Q": 2.0,
-        "R": 2.0,
-        "S": 1.98,
-        "T": 0,
-        "V": -4.0,
-        "W": -2.0,
-        "Y": -2.0,
-    }
-
-    # Kyte & Doolittle 1982
-    HYDROPHOBICITY = {
-        "A": 1.8,
-        "R": -4.5,
-        "N": -3.5,
-        "D": -3.5,
-        "C": 2.5,
-        "Q": -3.5,
-        "E": -3.5,
-        "G": -0.4,
-        "H": -3.2,
-        "I": 4.5,
-        "L": 3.8,
-        "K": -3.9,
-        "M": 1.9,
-        "F": 2.8,
-        "P": -1.6,
-        "S": -0.8,
-        "T": -0.7,
-        "W": -0.9,
-        "Y": -1.3,
-        "V": 4.2,
-    }
-
-    # Membrane protein GRAVY is usually >+0.5 the average GRAVY
-    # Kyte & Doolittle 1982
-    DIFF_HYDROPHOBICITY_MEMBRANE = 0.5
-
-    THERMOSTABLE_RESIDUES = {"I", "V", "Y", "W", "R", "E", "L"}
 
     def __init__(
         self,
@@ -152,9 +152,9 @@ class Protein:
 
     def _format_protein_sequence(self, protein_sequence: str) -> str:
         """Returns a formatted amino acid sequence"""
-        return "".join([aa for aa in protein_sequence.strip().upper() if aa in self.STANDARD_AMINO_ACIDS])
+        return "".join([aa for aa in protein_sequence.strip().upper() if aa in STANDARD_AMINO_ACIDS])
 
-    def aa_1mer_frequencies(self) -> dict:
+    def aa_1mer_frequencies(self) -> Dict[str, float]:
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_1mer_frequencies is None:
             if self.length > 1:
@@ -166,7 +166,7 @@ class Protein:
                 self._aa_1mer_frequencies = {}
         return self._aa_1mer_frequencies
 
-    def aa_2mer_frequencies(self) -> dict:
+    def aa_2mer_frequencies(self) -> Dict[str, float]:
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_2mer_frequencies is None:
             if self.length > 1:
@@ -186,12 +186,12 @@ class Protein:
         else:
             return np.nan
 
-    def gravy(self):
+    def gravy(self) -> float:
         """Compute the hydrophobicity as the
         Grand Average of Hydropathy (GRAVY)
         """
         if self.length > 0:
-            return np.mean([self.HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]])
+            return np.mean([HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]])
         else:
             return np.nan
 
@@ -199,20 +199,20 @@ class Protein:
         """Computes average carbon oxidation state (Zc) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([self.WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        return sum([WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
 
     def nh2o(self) -> float:
         """Computes stoichiometric hydration state (nH2O) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([self.NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        return sum([NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
 
     def thermostable_freq(self) -> float:
         """Thermostable residues reported by:
         https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.0030005
         """
         if self.length > 0:
-            return sum([v for k, v in self.aa_1mer_frequencies().items() if k in self.THERMOSTABLE_RESIDUES])
+            return sum([v for k, v in self.aa_1mer_frequencies().items() if k in THERMOSTABLE_RESIDUES])
         else:
             return np.nan
 

@@ -13,7 +13,10 @@ import argparse
 import json
 import logging
 import re
-from typing import Tuple
+from typing import (
+    Dict,
+    Tuple,
+)
 
 import bacdive
 import numpy as np
@@ -28,15 +31,16 @@ class QueryBacDive:
     Typical usage:
     ```
     bacdive_dict = QueryBacDive(
-            credentials_filepath=credentials_filepath,
+            username=username,
+            password=password,
             max_bacdive_id=int(max_bacdive_id),
             min_bacdive_id=int(min_bacdive_id),
         ).scrape_bacdive_api()
     ```
 
     Args:
-        credentials_file: Filepath to file with BacDive API credentials.
-            See function`load_credentials`
+        username: BacDive username
+        password: BacDive password
         min_bacdive_id: Minimum BacDive ID, default of 0 instead of 1
             for readability
         max_bacdive_id: Highest BacDive ID to query. Set above the highest
@@ -45,11 +49,13 @@ class QueryBacDive:
 
     def __init__(
         self,
-        credentials_filepath: str,
+        username: str,
+        password: str,
         max_bacdive_id: int,
         min_bacdive_id: int = 0,
     ):
-        self.username, self.password = self.load_credentials(credentials_filepath)
+        self.username = username
+        self.password = password
         self.min_bacdive_id = min_bacdive_id
         self.max_bacdive_id = max_bacdive_id
         self.query_list = list(range(self.min_bacdive_id, self.max_bacdive_id, 1))
@@ -89,7 +95,7 @@ class QueryBacDive:
 
         return results
 
-    def paginated_query(self, client, query_type: str) -> dict:
+    def paginated_query(self, client, query_type: str) -> Dict[str, dict]:
         """Returns a dictionary keyed by BacDive ID.
 
         The BacDive API limits to 100 queries per API call. This
@@ -106,7 +112,7 @@ class QueryBacDive:
         results = {}
         chunk_size = 100  # BacDive API call limit
         chunks = max([1, round(len(self.query_list) / chunk_size)])
-        logging.info("Iniating {} queries in {} chunks".format(len(self.query_list), chunks))
+        logging.info("Iniating %s queries in %s chunks", len(self.query_list), chunks)
         for n_split in range(chunks):
             l_idx = chunk_size * n_split
             r_idx = chunk_size * (n_split + 1)
@@ -117,7 +123,7 @@ class QueryBacDive:
             for strain in client.retrieve():
                 bacdive_id = strain["General"]["BacDive-ID"]
                 results[bacdive_id] = strain
-            logging.info("Searching query indices {}-{} returned {} results".format(l_idx, r_idx, count))
+            logging.info("Searching query indices %s-%s returned %s results", l_idx, r_idx, count)
 
         return results
 
@@ -216,7 +222,7 @@ class ComputeBacDiveTraits:
         else:
             return [float(regex.search(string).group(0))]
 
-    def get_reported_media(self) -> list:
+    def get_reported_media(self) -> set:
         subsection = self.entry.get("Culture and growth conditions", None).get("culture medium", {})
         media_ids = self._query_list_of_dicts(subsection, "@ref", "growth", ["yes", "positive"])
         return set(media_ids)
@@ -253,26 +259,26 @@ class ComputeBacDiveTraits:
     def get_species(self) -> str:
         return self.entry.get("Name and taxonomic classification", {}).get("species", None)
 
-    def get_reported_oxygen_tolerances(self) -> list:
+    def get_reported_oxygen_tolerances(self) -> set:
         subsection = self.entry.get("Physiology and metabolism", None).get("oxygen tolerance", {})
         tolerances = self._query_list_of_dicts(subsection, "oxygen tolerance", "", [None])
         return set(tolerances)
 
-    def get_reported_temperatures(self) -> list:
+    def get_reported_temperatures(self) -> set:
         temperatures = []
         subsection = self.entry.get("Culture and growth conditions", {}).get("culture temp", {})
         for val in self._query_list_of_dicts(subsection, "temperature", "growth", ["yes", "positive"]):
             temperatures.extend(self._format_values(val))
         return set(temperatures)
 
-    def get_reported_phs(self) -> list:
+    def get_reported_phs(self) -> set:
         phs = []
         subsection = self.entry.get("Culture and growth conditions", {}).get("culture pH", {})
         for val in self._query_list_of_dicts(subsection, "pH", "ability", ["yes", "positive"]):
             phs.extend(self._format_values(val))
         return set(phs)
 
-    def get_reported_salinities(self) -> list:
+    def get_reported_salinities(self) -> set:
         salinities = []
         subsection = self.entry.get("Physiology and metabolism", None).get("halophily", {})
         if isinstance(subsection, dict):
@@ -321,7 +327,7 @@ class ComputeBacDiveTraits:
         else:
             return None
 
-    def compute_midpoint_salinity(self):
+    def compute_midpoint_salinity(self) -> float:
         if len(self.reported_salinities) > 0:
             return np.mean([min(self.reported_salinities), max(self.reported_salinities)])
 
@@ -372,7 +378,7 @@ class ComputeBacDiveTraits:
         else:
             return salinities
 
-    def _onehot_range(arr, min_bin: float, max_bin: float, step: float, prefix: str) -> dict:
+    def _onehot_range(arr, min_bin: float, max_bin: float, step: float, prefix: str) -> Dict[str, float]:
         """Return onehot ranges formatted with prefixes"""
         onehot_dict = {}
         for bin_floor in np.arange(min_bin, max_bin, step):
@@ -382,7 +388,7 @@ class ComputeBacDiveTraits:
                 onehot_dict[str(bin_floor)] = 0
         return {f"{prefix}_{k}": v for k, v in onehot_dict.items()}
 
-    def onehot_oxygen_tolerance(self) -> dict:
+    def onehot_oxygen_tolerance(self) -> Dict[str, int]:
         """
         Returns a dictionary of oxygen tolerance definitions with 1
         indicating the organism has that tolerance. Oxygen tolerance
@@ -467,17 +473,17 @@ class ComputeBacDiveTraits:
 
         return use_optimum
 
-    def screen_range(self, min: float, max: float, min_diff: float):
+    def screen_range(self, min_: float, max_: float, min_diff: float):
         """Returns False if the range is suspect.
 
         Requires both min and max to be reported and the difference
         between them to be greater than the specified distance.
         """
         use_range = False
-        if min != None and max != None:
-            if abs(float(max) - float(min)) >= min_diff:
+        if min_ is not None and max_ is not None:
+            if abs(float(max_) - float(min_)) >= min_diff:
                 use_range = True
-            elif float(min) == 0 and float(max) == 0:  # A condition for salinity
+            elif float(min_) == 0 and float(max_) == 0:  # A condition for salinity
                 use_range = True
 
         return use_range
@@ -517,7 +523,8 @@ class ComputeBacDiveTraits:
 def get_bacdive_trait_data(
     output: str,
     bacdive_output: str,
-    credentials_filepath: str,
+    bacdive_username: str,
+    bacdive_password: str,
     max_bacdive_id: int,
     min_bacdive_id: int = 0,
     bacdive_json: dict = None,
@@ -538,7 +545,8 @@ def get_bacdive_trait_data(
     if bacdive_json is None:
         logging.info("Attempting to download data from BacDive API")
         bacdive_dict = QueryBacDive(
-            credentials_filepath=credentials_filepath,
+            username=bacdive_username,
+            password=bacdive_password,
             max_bacdive_id=int(max_bacdive_id),
             min_bacdive_id=int(min_bacdive_id),
         ).scrape_bacdive_api()
@@ -570,14 +578,18 @@ def parse_args():
         prog="GetBacDiveTraitData",
         description="Scrapes BacDive API for all strain data and computes traits",
     )
-
     parser.add_argument(
-        "-c",
-        "--credentials",
-        help="File with BacDive credentials as: 1st line username, 2nd line password",
+        "-u",
+        "--username",
+        help="BacDive username",
     )
-    parser.add_argument("-min", default=0, help="Lowest BacDive ID to query", required=False)
-    parser.add_argument("-max", help="Highest BacDive ID to query")
+    parser.add_argument(
+        "-p",
+        "--password",
+        help="BacDive password",
+    )
+    parser.add_argument("--min", default=0, help="Lowest BacDive ID to query", required=False)
+    parser.add_argument("--max", help="Highest BacDive ID to query")
     parser.add_argument(
         "-s",
         "--save-bacdive-download",
@@ -593,13 +605,14 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(levelname)s:%(message)s", encoding="utf-8", level=logging.INFO)
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
     args = parse_args()
     get_bacdive_trait_data(
         output=args.output,
         bacdive_output=args.save_bacdive_download,
-        credentials_filepath=args.credentials,
+        bacdive_username=args.username,
+        bacdive_password=args.password,
         max_bacdive_id=int(args.max),
         min_bacdive_id=int(args.min),
         bacdive_json=args.existing,

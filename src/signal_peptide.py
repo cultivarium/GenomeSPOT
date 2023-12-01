@@ -64,26 +64,30 @@ class SignalPeptideHMM:
         self.idx_to_state = dict(zip(range(len(self.states)), self.states))
 
     def _format_protein_sequence(self, protein_sequence) -> np.array:
-        default_symbol = self.symbol_to_idx.get("G")  # hack: replace weird codes with glycine
+        default_symbol = self.symbol_to_idx.get("G")  # hack: replace weird codes with 'neutral' glycine
         protein_nterminus = protein_sequence[0 : self.nterminus_length]
         arr_sequence = np.array([self.symbol_to_idx.get(aa, default_symbol) for aa in protein_nterminus]).reshape(-1, 1)
         return arr_sequence
+
+    def _predict_hidden_states(self, formatted_sequence: str):
+        """Function to fit sequence against HMM"""
+        log_prob, pred_state_indices = self.model.decode(formatted_sequence)
+        pred_states = [self.idx_to_state[idx] for idx in pred_state_indices]
+        return pred_states, log_prob
 
     def predict_signal_peptide(self, protein_sequence) -> tuple:
         """Uses an HMM model to predict signal peptides in bacteria and archaea"""
         # Score sequence against model
         input_sequence = self._format_protein_sequence(protein_sequence)
-        if len(input_sequence) < self.nterminus_length:
+        if len(input_sequence) < self.nterminus_length:  # too short
             is_exported = False
             signal_end_index = -1
         else:
-            log_prob, pred_state_indices = self.model.decode(input_sequence)
+            pred_states, log_prob = self._predict_hidden_states(input_sequence)
             # Assess probability of being signal peptide
-            has_cut_site = self.state_to_index[self.signal_end_state] in pred_state_indices
+            has_cut_site = self.signal_end_state in pred_states
             is_exported = (log_prob > self.threshold_log_prob) and has_cut_site
-            # Find cut site
             if is_exported is True:
-                pred_states = [self.idx_to_state[idx] for idx in pred_state_indices]
                 signal_end_index = pred_states.index(self.signal_end_state)
             else:
                 signal_end_index = -1

@@ -4,13 +4,14 @@ from collections import Counter
 from itertools import groupby
 from typing import (
     IO,
+    Dict,
     Tuple,
 )
 
 import numpy as np
 
 
-def fasta_iter(fasta_file: IO) -> Tuple[str, str]:
+def iterate_fasta(fasta_file: IO) -> Tuple[str, str]:
     """Iterable yielding FASTA header and sequence
 
     Modified from: https://www.biostars.org/p/710/
@@ -29,7 +30,7 @@ def fasta_iter(fasta_file: IO) -> Tuple[str, str]:
         yield (headerStr, seq)
 
 
-def count_kmers(sequence: str, k: int) -> dict:
+def count_kmers(sequence: str, k: int) -> Dict[str, float]:
     """Returns counts of every observed k-mer at specific k.
 
     Args:

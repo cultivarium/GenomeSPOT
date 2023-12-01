@@ -14,6 +14,7 @@ from collections import (
     defaultdict,
 )
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 
@@ -90,13 +91,13 @@ class TaxonomyGTDB:
             fh.seek(0)
             for line in fh.readlines():
                 gtdb_accession, taxstring = line.strip().split("\t")
-                ncbi_accession = self.gtdb_accession_to_ncbi(gtdb_accession, make_genbank=True, remove_version=True)
-                _, taxonomy = self.gtdb_taxonomy_to_tuple(taxstring)
+                ncbi_accession = self.convert_gtdb_to_ncbi(gtdb_accession, make_genbank=True, remove_version=True)
+                _, taxonomy = self.format_taxonomy_as_tuple(taxstring)
                 taxonomy_dict[ncbi_accession] = taxonomy
             fh.close()
         return taxonomy_dict
 
-    def gtdb_accession_to_ncbi(self, accession: str, make_genbank: bool = True, remove_version: bool = True) -> str:
+    def convert_gtdb_to_ncbi(self, accession: str, make_genbank: bool = True, remove_version: bool = True) -> str:
         """Convert GTDB 'accession' into NCBI accession.
 
         Options allow different formats.
@@ -116,7 +117,7 @@ class TaxonomyGTDB:
             ncbi_accession = ncbi_accession[:-2]
         return ncbi_accession
 
-    def gtdb_taxonomy_to_tuple(self, taxstring: str) -> dict:
+    def format_taxonomy_as_tuple(self, taxstring: str) -> Tuple:
         """Convert GTDB taxstring to a dictionary.
 
         Args:

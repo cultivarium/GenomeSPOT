@@ -75,7 +75,7 @@ oxygen                0.981243       NaN       NaN      NaN
 
 # Tutorial
 
-`tutorial.ipynb` provides an interactions demonstration of modules in this repo. Briefly:
+`tutorial.ipynb` provides an interactive demonstration of modules in this repo. Briefly:
 
 - The user provides a genome sequence and protein sequences in FASTA format. Protein prediction is not performed by this package because it would multiply the runtime.
 - Features of sequences in the genome are calculated by `Genome` using the classes `Protein` and `DNA`
@@ -95,12 +95,21 @@ Users may be interested in replicating this work using the provided modules and 
 
 ## Download data for training
 
+Data is downloaded from two resources:
+
+- BacDive API (**instructions for credentials here**: https://api.bacdive.dsmz.de/)
+- Genome Taxonomy Database (info: https://gtdb.ecogenomic.org/)
+
 NOTE: this takes a long time.
 
 ```shell
 # Download BacDive data
 vi .bacdive_credentials # username on line 1, password on line 2
-python3 src/query_bacdive.py -c .bacdive_credentials -max 171000 -o data/traits/bacdive_data.json
+MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
+python3 src/model_training/download_training_data.py -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
+    --max $MAX_BACDIVE_ID \
+    -s raw_bacdive_data.json \
+    -o traits.json
 
 # Download genomes
 ncbi-genome-download -s genbank -F 'fasta,protein-fasta' -o data/genomes -A genbank_accessions.txt 'bacteria,archaea'

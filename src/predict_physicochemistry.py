@@ -5,6 +5,7 @@ import logging
 from argparse import ArgumentParser
 from collections import defaultdict
 from typing import (
+    Dict,
     Tuple,
     Union,
 )
@@ -24,7 +25,7 @@ PREDICTION_BOUNDS = {
 }
 
 
-def predict_from_genome(genome_features: dict, path_to_models: str) -> dict:
+def predict_from_genome(genome_features: dict, path_to_models: str) -> Dict[str, dict]:
     """Predicts growth conditions from genome features for all models specified
     in the provided instructions.
 
@@ -61,7 +62,7 @@ def predict_from_genome(genome_features: dict, path_to_models: str) -> dict:
     return predictions
 
 
-def load_instructions(instructions_filename: str):
+def load_instructions(instructions_filename: str) -> dict:
     """Load pipeline and features stored in instruction file
 
     The instructions contain instructions for condition (e.g. pH)
@@ -103,7 +104,7 @@ def genome_features_to_input_arr(features: list, genome_features: dict) -> np.nd
     return X
 
 
-def predict_target_value(X: np.ndarray, model, target: str, method: str = "predict") -> dict:
+def predict_target_value(X: np.ndarray, model, target: str, method: str = "predict") -> Dict[str, float]:
     """Predicts a value and confidence intervals.
 
     Args:
@@ -152,7 +153,7 @@ def check_prediction_range(y_pred: float, target: str) -> Tuple[float, Union[str
     return revised_y_pred, warning
 
 
-def load_genome_features(features_json) -> dict:
+def load_genome_features(features_json: str) -> Dict[str, dict]:
     """Loads a JSON containing features, if available"""
     logging.info("Loading existing genome features from %s", features_json)
     with open(features_json, "r", encoding="utf-8") as fh:
@@ -160,10 +161,7 @@ def load_genome_features(features_json) -> dict:
     return genome_features
 
 
-def measure_genome_features(
-    faa_path: str,
-    fna_path: str,
-) -> dict:
+def measure_genome_features(faa_path: str, fna_path: str) -> Dict[str, dict]:
     """Measure features from the provided genome files"""
     logging.info(
         "Measuring features from:\n\t%s\n\t%s",
@@ -173,7 +171,7 @@ def measure_genome_features(
     genome_features = Genome(
         contig_filepath=fna_path,
         protein_filepath=faa_path,
-    ).genome_metrics()
+    ).measure_genome_features()
     return genome_features
 
 

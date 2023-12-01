@@ -1,9 +1,8 @@
-"""Class to compute info about nucleotide sequences.
+"""Class to compute info about nucleotide sequences."""
 
-Examples include nucleotide frequency.
-"""
 from collections import defaultdict
 from itertools import product
+from typing import Dict
 
 from helpers import count_kmers
 
@@ -49,7 +48,7 @@ class DNA:
                 canonical_kmers_dict[self.reverse_complement(kmer)] = kmer
         return canonical_kmers_dict
 
-    def count_canonical_kmers(self, k: int) -> dict:
+    def count_canonical_kmers(self, k: int) -> Dict[str, float]:
         """Returns counts for canonical k-mers only, e.g. 'AA' records
         counts for both 'AA' and its reverse complement 'TT'. Canonical
         is determined by lexicographic order.
@@ -64,7 +63,7 @@ class DNA:
                 canonical_kmers_count[canonical_kmer] += count
         return dict(canonical_kmers_count)
 
-    def nt_1mer_frequencies(self) -> dict:
+    def nt_1mer_frequencies(self) -> Dict[str, float]:
         """Count frequencies of canonical 1-mers"""
         if self._nt_1mer_frequencies is None:
             kmers_count = self.count_canonical_kmers(k=1)
@@ -72,7 +71,7 @@ class DNA:
             self._nt_1mer_frequencies = {k: float(v / n_kmers) for k, v in kmers_count.items()}
         return self._nt_1mer_frequencies
 
-    def nt_2mer_frequencies(self) -> dict:
+    def nt_2mer_frequencies(self) -> Dict[str, float]:
         """Count frequencies of canonical 2-mers"""
         if self._nt_2mer_frequencies is None:
             kmers_count = self.count_canonical_kmers(k=2)
@@ -91,7 +90,7 @@ class DNA:
 
         return float(transition_frequency)
 
-    def nucleotide_metrics(self) -> dict:
+    def nucleotide_metrics(self) -> Dict[str, float]:
         """Computes a dictionary with all metrics for a DNA sequence"""
 
         sequence_metrics = {

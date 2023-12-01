@@ -1,16 +1,16 @@
-#!/usr/bin/env python3
+"""Core script to predict conditions from a genome"""
 
 import argparse
-from collections import defaultdict
 import json
 import logging
+from collections import defaultdict
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
-
 from genome import Genome
+
 
 # Used to bound predictions to sensical values/ranges from training
 PREDICTION_BOUNDS = {
@@ -50,14 +50,10 @@ def genome_features_to_input_arr(features: list, genome_features: dict) -> np.ar
         for feat, value in feat_dict.items()
     }
     try:
-        assert len(features) == len(
-            set(features).intersection(set(flat_genome_features.keys()))
-        )
+        assert len(features) == len(set(features).intersection(set(flat_genome_features.keys())))
     except Exception as exc:
         missing_features = set(features).difference(set(flat_genome_features.keys()))
-        raise ValueError(
-            f"Features were provided that are not found in genome features: {missing_features}"
-        ) from exc
+        raise ValueError(f"Features were provided that are not found in genome features: {missing_features}") from exc
     X = np.array([flat_genome_features.get(x) for x in features]).reshape(1, -1)
     return X
 
@@ -135,9 +131,7 @@ def predict_with_all_models(genome_features: dict, instructions_filename: str) -
             target = condition
             features = instructions[condition]["features"]
             X = genome_features_to_input_arr(features, genome_features)
-            predictions[target] = predict_target_value(
-                target=target, X=X, method="predict_proba"
-            )
+            predictions[target] = predict_target_value(target=target, X=X, method="predict_proba")
     return predictions
 
 
@@ -189,18 +183,14 @@ def predict_physicochemistry(
         logging.info("Predicting growth conditions")
         predictions = predict_with_all_models(genome_features, instructions_filename)
     else:
-        logging.info(
-            "Skipping prediction of growth conditions as `run_prediction` was set to False "
-        )
+        logging.info("Skipping prediction of growth conditions as `run_prediction` was set to False ")
         predictions = {}
 
     return predictions, genome_features
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="MeasureGenome", description="Measure and predict properties from a genome"
-    )
+    parser = argparse.ArgumentParser(prog="MeasureGenome", description="Measure and predict properties from a genome")
 
     parser.add_argument(
         "-c",

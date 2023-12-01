@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Class to compute info about primary sequences of proteins.
 
 Information about primary sequences refers to what can be learned from 
@@ -11,9 +9,8 @@ acidic.
 from collections import defaultdict
 from itertools import product
 
-from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
 import numpy as np
-
+from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
 from helpers import count_kmers
 from signal_peptide import SignalPeptideHMM
 
@@ -155,13 +152,7 @@ class Protein:
 
     def _format_protein_sequence(self, protein_sequence: str) -> str:
         """Returns a formatted amino acid sequence"""
-        return "".join(
-            [
-                aa
-                for aa in protein_sequence.strip().upper()
-                if aa in self.STANDARD_AMINO_ACIDS
-            ]
-        )
+        return "".join([aa for aa in protein_sequence.strip().upper() if aa in self.STANDARD_AMINO_ACIDS])
 
     def aa_1mer_frequencies(self) -> dict:
         """Returns count of every amino acid ignoring start methionine"""
@@ -169,9 +160,7 @@ class Protein:
             if self.length > 1:
                 self._aa_1mer_frequencies = {
                     k: float(v / len(self.sequence[self.start_pos :]))
-                    for k, v in count_kmers(
-                        self.sequence[self.start_pos :], k=1
-                    ).items()
+                    for k, v in count_kmers(self.sequence[self.start_pos :], k=1).items()
                 }
             else:
                 self._aa_1mer_frequencies = {}
@@ -183,9 +172,7 @@ class Protein:
             if self.length > 1:
                 self._aa_2mer_frequencies = {
                     k: float(v / len(self.sequence[self.start_pos :]))
-                    for k, v in count_kmers(
-                        self.sequence[self.start_pos :], k=2
-                    ).items()
+                    for k, v in count_kmers(self.sequence[self.start_pos :], k=2).items()
                 }
             else:
                 self._aa_2mer_frequencies = {}
@@ -204,9 +191,7 @@ class Protein:
         Grand Average of Hydropathy (GRAVY)
         """
         if self.length > 0:
-            return np.mean(
-                [self.HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]]
-            )
+            return np.mean([self.HYDROPHOBICITY[aa] for aa in self.sequence[self.start_pos :]])
         else:
             return np.nan
 
@@ -214,32 +199,20 @@ class Protein:
         """Computes average carbon oxidation state (Zc) of a
         protein based on a dictionary of amino acids.
         """
-        return (
-            sum([self.WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]])
-            / self.length
-        )
+        return sum([self.WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
 
     def nh2o(self) -> float:
         """Computes stoichiometric hydration state (nH2O) of a
         protein based on a dictionary of amino acids.
         """
-        return (
-            sum([self.NH2O_RQEC[s] for s in self.sequence[self.start_pos :]])
-            / self.length
-        )
+        return sum([self.NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
 
     def thermostable_freq(self) -> float:
         """Thermostable residues reported by:
         https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.0030005
         """
         if self.length > 0:
-            return sum(
-                [
-                    v
-                    for k, v in self.aa_1mer_frequencies().items()
-                    if k in self.THERMOSTABLE_RESIDUES
-                ]
-            )
+            return sum([v for k, v in self.aa_1mer_frequencies().items() if k in self.THERMOSTABLE_RESIDUES])
         else:
             return np.nan
 

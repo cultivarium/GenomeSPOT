@@ -2,8 +2,10 @@
 
 from collections import Counter
 from itertools import groupby
-
-from typing import IO, Tuple
+from typing import (
+    IO,
+    Tuple,
+)
 
 import numpy as np
 

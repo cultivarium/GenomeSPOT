@@ -6,13 +6,17 @@ Classes to perform operations on a taxonomic basis:
     - PartitionTaxa: partitions a dataset using taxonomy
 """
 
-from collections import defaultdict, Counter
-import subprocess as sp
-from pathlib import Path
 import gzip
 import io
+import subprocess as sp
+from collections import (
+    Counter,
+    defaultdict,
+)
+from pathlib import Path
 
 import numpy as np
+
 
 RANDOM_SEED = 1111
 rng = np.random.default_rng(RANDOM_SEED)
@@ -56,9 +60,7 @@ class TaxonomyGTDB:
             desired_files = ["ar53_taxonomy.tsv.gz", "bac120_taxonomy.tsv.gz"]
             if any([Path(file).exists() is False for file in desired_files]):
                 for file in desired_files:
-                    cmd = (
-                        f"wget https://data.gtdb.ecogenomic.org/releases/latest/{file}"
-                    )
+                    cmd = f"wget https://data.gtdb.ecogenomic.org/releases/latest/{file}"
                     print(cmd)
                     sp.run(cmd, shell=True, check=True)
             return desired_files
@@ -88,17 +90,13 @@ class TaxonomyGTDB:
             fh.seek(0)
             for line in fh.readlines():
                 gtdb_accession, taxstring = line.strip().split("\t")
-                ncbi_accession = self.gtdb_accession_to_ncbi(
-                    gtdb_accession, make_genbank=True, remove_version=True
-                )
+                ncbi_accession = self.gtdb_accession_to_ncbi(gtdb_accession, make_genbank=True, remove_version=True)
                 _, taxonomy = self.gtdb_taxonomy_to_tuple(taxstring)
                 taxonomy_dict[ncbi_accession] = taxonomy
             fh.close()
         return taxonomy_dict
 
-    def gtdb_accession_to_ncbi(
-        self, accession: str, make_genbank: bool = True, remove_version: bool = True
-    ) -> str:
+    def gtdb_accession_to_ncbi(self, accession: str, make_genbank: bool = True, remove_version: bool = True) -> str:
         """Convert GTDB 'accession' into NCBI accession.
 
         Options allow different formats.
@@ -146,9 +144,7 @@ class TaxonomyGTDB:
             names.append(taxon)
         return tuple(levels), tuple(names)
 
-    def measure_diversity(
-        self, query_rank: str, diversity_rank: str, subset_genomes: list = None
-    ) -> dict:
+    def measure_diversity(self, query_rank: str, diversity_rank: str, subset_genomes: list = None) -> dict:
         """Counts the number of taxa at rank `diversity_rank`
         under each taxon of the `query_rank` for a set of genomes.
         """
@@ -242,9 +238,7 @@ class BalanceTaxa:
         for rank, i in self.taxonomy.indices.items():
             obs_exp_ratio_by_rank[i] = {}
             n_expected = self.taxonomy.measure_diversity(rank, diversity_rank)
-            n_observed = self.taxonomy.measure_diversity(
-                rank, diversity_rank, subset_genomes=genomes
-            )
+            n_observed = self.taxonomy.measure_diversity(rank, diversity_rank, subset_genomes=genomes)
             for taxon, n_obs in n_observed.items():
                 obs_exp_ratio = n_obs / n_expected[taxon]
                 if rank == "phylum":
@@ -320,26 +314,15 @@ class BalanceTaxa:
         # Select genomes from each group up to n_genomes
         selected_genomes = []
         for _, genome_group in taxonomic_groups.items():
-            selected_genomes.extend(
-                sorted(genome_group)[: min([n_genomes, len(genome_group)])]
-            )
+            selected_genomes.extend(sorted(genome_group)[: min([n_genomes, len(genome_group)])])
 
         return selected_genomes
 
-    def assess_proportion(
-        self, subset_genomes, reference_genomes, rank: str = "phylum"
-    ):
+    def assess_proportion(self, subset_genomes, reference_genomes, rank: str = "phylum"):
         """Helper to provide composition of genomes to a reference set at specified rank."""
-        n_selected = self.taxonomy.measure_diversity(
-            rank, "species", subset_genomes=subset_genomes
-        )
-        n_reference = self.taxonomy.measure_diversity(
-            rank, "species", subset_genomes=reference_genomes
-        )
-        return {
-            taxon: n_selected.get(taxon, 0) / count
-            for taxon, count in n_reference.items()
-        }
+        n_selected = self.taxonomy.measure_diversity(rank, "species", subset_genomes=subset_genomes)
+        n_reference = self.taxonomy.measure_diversity(rank, "species", subset_genomes=reference_genomes)
+        return {taxon: n_selected.get(taxon, 0) / count for taxon, count in n_reference.items()}
 
 
 class PartitionTaxa:
@@ -418,27 +401,18 @@ class PartitionTaxa:
         # Shuffle
         for taxon, taxa_available in partition_taxa_available.items():
             partition_taxa_available[taxon] = list(
-                rng.choice(
-                    list(taxa_available), size=len(taxa_available), replace=False
-                )
+                rng.choice(list(taxa_available), size=len(taxa_available), replace=False)
             )
             # rng.shuffle(partition_taxa_available[taxon])
 
         # Set order of selections based on frequencies in dataset
-        n_partition_taxa = len(
-            [taxon for taxa in partition_taxa_available.values() for taxon in taxa]
-        )
+        n_partition_taxa = len([taxon for taxa in partition_taxa_available.values() for taxon in taxa])
         iterator_counts = self.taxonomy.measure_diversity(
             self.iteration_rank, self.diversity_rank, subset_genomes=genomes
         )
         iterator_list = list(iterator_counts.keys())
-        iterator_freqs = list(
-            iterator_counts[phylum] / sum(iterator_counts.values())
-            for phylum in iterator_list
-        )
-        random_iterator_order = rng.choice(
-            iterator_list, n_partition_taxa, p=iterator_freqs, replace=True
-        )
+        iterator_freqs = list(iterator_counts[phylum] / sum(iterator_counts.values()) for phylum in iterator_list)
+        random_iterator_order = rng.choice(iterator_list, n_partition_taxa, p=iterator_freqs, replace=True)
 
         # Build partition until desired size is reached
         for iteration_taxon in random_iterator_order:
@@ -454,9 +428,7 @@ class PartitionTaxa:
 
         return set(partitioned_genomes)
 
-    def find_relatives_of_partitioned_set_in_reference(
-        self, partitioned_genomes: set
-    ) -> set:
+    def find_relatives_of_partitioned_set_in_reference(self, partitioned_genomes: set) -> set:
         """Provides all genomes within taxa selected for partitioning.
 
         For example, if the partition rank is family, if a genome partitioned

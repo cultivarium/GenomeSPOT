@@ -30,7 +30,7 @@ Recommended:
 Runtime: ~5-10 seconds per genome
 
 ```shell
-python src/predict_physicochemistry.py -c tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz -p tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz -o test.predictions.tsv
+python src/predict_physicochemistry.py -c tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz -p tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz -o GCA_000172155.1
 ```
 Hint: if you only have a genome and need a protein FASTA, use prodigal. 
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Class to compute info about nucleotide sequences.
 
 Examples include nucleotide frequency.
@@ -44,9 +42,7 @@ class DNA:
         all k-mers at a given k. E.g.: {'AA' : 'TT', 'AA' : 'AA'}
         """
         canonical_kmers_dict = {}
-        kmers_sorted = sorted(
-            ["".join(i) for i in product(["A", "T", "C", "G"], repeat=k)]
-        )
+        kmers_sorted = sorted(["".join(i) for i in product(["A", "T", "C", "G"], repeat=k)])
         for kmer in kmers_sorted:
             if kmer not in canonical_kmers_dict.keys():
                 canonical_kmers_dict[kmer] = kmer
@@ -73,9 +69,7 @@ class DNA:
         if self._nt_1mer_frequencies is None:
             kmers_count = self.count_canonical_kmers(k=1)
             n_kmers = sum(kmers_count.values())
-            self._nt_1mer_frequencies = {
-                k: float(v / n_kmers) for k, v in kmers_count.items()
-            }
+            self._nt_1mer_frequencies = {k: float(v / n_kmers) for k, v in kmers_count.items()}
         return self._nt_1mer_frequencies
 
     def nt_2mer_frequencies(self) -> dict:
@@ -83,9 +77,7 @@ class DNA:
         if self._nt_2mer_frequencies is None:
             kmers_count = self.count_canonical_kmers(k=2)
             n_kmers = sum(kmers_count.values())
-            self._nt_2mer_frequencies = {
-                k: float(v / n_kmers) for k, v in kmers_count.items()
-            }
+            self._nt_2mer_frequencies = {k: float(v / n_kmers) for k, v in kmers_count.items()}
         return self._nt_2mer_frequencies
 
     def purine_pyrimidine_transition_freq(self) -> float:

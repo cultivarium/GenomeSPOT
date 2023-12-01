@@ -2,14 +2,13 @@
 Measures properties of a genome (fasta + protein-fasta).
 """
 
-from collections import defaultdict
 import gzip
 import io
 import logging
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-
 from dna import DNA
 from helpers import fasta_iter
 from protein import Protein
@@ -43,9 +42,7 @@ class Genome:
         if self._protein_data is None:
             self._protein_data = {}
             if self.faa_filepath.endswith(".gz"):
-                fh = io.TextIOWrapper(
-                    io.BufferedReader(gzip.open(self.faa_filepath, "r"))
-                )
+                fh = io.TextIOWrapper(io.BufferedReader(gzip.open(self.faa_filepath, "r")))
             else:
                 fh = open(self.faa_filepath, "r")
             fh.seek(0)
@@ -82,9 +79,7 @@ class Genome:
         # distributions
         pis = np.array(values_dict["pi"])
         protein_statistics["pis_acidic"] = float(np.sum((pis < 5.5)) / len(pis))
-        protein_statistics["pis_neutral"] = float(
-            np.sum(((pis >= 5.5) & (pis < 8.5))) / len(pis)
-        )
+        protein_statistics["pis_neutral"] = float(np.sum(((pis >= 5.5) & (pis < 8.5))) / len(pis))
         protein_statistics["pis_basic"] = float(np.sum((pis >= 8.5)) / len(pis))
         step = 1
         for i in range(3, 12, step):
@@ -98,38 +93,27 @@ class Genome:
         protein_statistics["mean_gravy"] = float(np.mean(values_dict["gravy"]))
         protein_statistics["mean_zc"] = float(np.mean(values_dict["zc"]))
         protein_statistics["mean_nh2o"] = float(np.mean(values_dict["nh2o"]))
-        protein_statistics["mean_protein_length"] = float(
-            np.mean(values_dict["length"])
-        )
+        protein_statistics["mean_protein_length"] = float(np.mean(values_dict["length"]))
         protein_statistics["mean_thermostable_freq"] = self._length_weighted_average(
             values_dict["thermostable_freq"], values_dict["length"]
         )
 
         # ratios and proportion
         zeros_list = [0] * len(values_dict["length"])
-        arg = self._length_weighted_average(
-            values_dict.get("aa_R", zeros_list), values_dict["length"]
-        )
-        lys = self._length_weighted_average(
-            values_dict.get("aa_K", zeros_list), values_dict["length"]
-        )
+        arg = self._length_weighted_average(values_dict.get("aa_R", zeros_list), values_dict["length"])
+        lys = self._length_weighted_average(values_dict.get("aa_K", zeros_list), values_dict["length"])
         if arg + lys > 0:
             protein_statistics["proportion_R_RK"] = float(arg / (arg + lys))
 
         # amino acid k-mer frequencies
         for variable, values in values_dict.items():
             if variable.startswith("aa_"):
-                protein_statistics[variable] = self._length_weighted_average(
-                    values, values_dict["length"]
-                )
+                protein_statistics[variable] = self._length_weighted_average(values, values_dict["length"])
 
         return protein_statistics
 
     def _length_weighted_average(self, values, lengths):
-        return float(
-            np.sum([length * val for length, val in zip(lengths, values)])
-            / np.sum(lengths)
-        )
+        return float(np.sum([length * val for length, val in zip(lengths, values)]) / np.sum(lengths))
 
     def protein_localization(self):
         """Localizes proteins to inside/outside/within the cell membrane.
@@ -148,19 +132,13 @@ class Genome:
             # exported_proteins = _get_exported_proteins_with_deepsig(self.faa_filepath, self.organism_type)
             # self.exported_proteins = exported_proteins
             mean_hydrophobicity = np.mean(
-                [
-                    v["gravy"]
-                    for k, v in self.protein_data().items()
-                    if v["gravy"] is not None
-                ]
+                [v["gravy"] for k, v in self.protein_data().items() if v["gravy"] is not None]
             )
 
             self._protein_localization = {}
             for protein in self.protein_data().keys():
                 hydrophobicity = self.protein_data()[protein]["gravy"]
-                if (
-                    hydrophobicity - mean_hydrophobicity
-                ) >= Protein.DIFF_HYDROPHOBICITY_MEMBRANE:
+                if (hydrophobicity - mean_hydrophobicity) >= Protein.DIFF_HYDROPHOBICITY_MEMBRANE:
                     self._protein_localization[protein] = "membrane"
                 else:
                     # Get localization
@@ -202,19 +180,9 @@ class Genome:
 
         logging.info("{}: Identifying protein localization".format(self.prefix))
         localization = self.protein_localization()
-        extracellular_soluble = {
-            protein
-            for protein, locale in localization.items()
-            if locale == "extra_soluble"
-        }
-        intracellular_soluble = {
-            protein
-            for protein, locale in localization.items()
-            if locale == "intra_soluble"
-        }
-        membrane = {
-            protein for protein, locale in localization.items() if locale == "membrane"
-        }
+        extracellular_soluble = {protein for protein, locale in localization.items() if locale == "extra_soluble"}
+        intracellular_soluble = {protein for protein, locale in localization.items() if locale == "intra_soluble"}
+        membrane = {protein for protein, locale in localization.items() if locale == "membrane"}
 
         logging.info("{}: Collecting genome statistics".format(self.prefix))
         self.genomic_statistics["all"] = self.compute_dna_statistics()
@@ -222,28 +190,22 @@ class Genome:
         logging.info("{}: Collecting protein statistics".format(self.prefix))
         self.genomic_statistics["all"].update(self.compute_protein_statistics())
         self.genomic_statistics["all"]["protein_coding_density"] = (
-            3
-            * self.genomic_statistics["all"]["total_protein_length"]
-            / self.genomic_statistics["all"]["nt_length"]
+            3 * self.genomic_statistics["all"]["total_protein_length"] / self.genomic_statistics["all"]["nt_length"]
         )
         if extracellular_soluble:
-            self.genomic_statistics[
-                "extracellular_soluble"
-            ] = self.compute_protein_statistics(subset_proteins=extracellular_soluble)
-        if intracellular_soluble:
-            self.genomic_statistics[
-                "intracellular_soluble"
-            ] = self.compute_protein_statistics(subset_proteins=intracellular_soluble)
-        if membrane:
-            self.genomic_statistics["membrane"] = self.compute_protein_statistics(
-                subset_proteins=membrane
+            self.genomic_statistics["extracellular_soluble"] = self.compute_protein_statistics(
+                subset_proteins=extracellular_soluble
             )
+        if intracellular_soluble:
+            self.genomic_statistics["intracellular_soluble"] = self.compute_protein_statistics(
+                subset_proteins=intracellular_soluble
+            )
+        if membrane:
+            self.genomic_statistics["membrane"] = self.compute_protein_statistics(subset_proteins=membrane)
 
         self.genomic_statistics["diff_extra_intra"] = {}
         for key, val_extra in self.genomic_statistics["extracellular_soluble"].items():
-            val_intra = self.genomic_statistics["intracellular_soluble"].get(
-                key, np.nan
-            )
+            val_intra = self.genomic_statistics["intracellular_soluble"].get(key, np.nan)
             self.genomic_statistics["diff_extra_intra"][key] = val_extra - val_intra
 
         return self.genomic_statistics

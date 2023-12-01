@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Queries BacDive API and computes trait values
 
 Provides information for all strains up to the highest provided strain ID. Typical 
@@ -14,8 +12,8 @@ python3 src/query_bacdive.py -c .bacdive_credentials -max 171000 \
 import argparse
 import json
 import logging
-from typing import Tuple
 import re
+from typing import Tuple
 
 import bacdive
 import numpy as np
@@ -108,9 +106,7 @@ class QueryBacDive:
         results = {}
         chunk_size = 100  # BacDive API call limit
         chunks = max([1, round(len(self.query_list) / chunk_size)])
-        logging.info(
-            "Iniating {} queries in {} chunks".format(len(self.query_list), chunks)
-        )
+        logging.info("Iniating {} queries in {} chunks".format(len(self.query_list), chunks))
         for n_split in range(chunks):
             l_idx = chunk_size * n_split
             r_idx = chunk_size * (n_split + 1)
@@ -121,11 +117,7 @@ class QueryBacDive:
             for strain in client.retrieve():
                 bacdive_id = strain["General"]["BacDive-ID"]
                 results[bacdive_id] = strain
-            logging.info(
-                "Searching query indices {}-{} returned {} results".format(
-                    l_idx, r_idx, count
-                )
-            )
+            logging.info("Searching query indices {}-{} returned {} results".format(l_idx, r_idx, count))
 
         return results
 
@@ -199,16 +191,12 @@ class ComputeBacDiveTraits:
         elif isinstance(obj, list):  # multiple values
             for subobj in obj:
                 if isinstance(subobj, dict):
-                    val = self._query_dict_conditionally(
-                        subobj, key, required_key, required_vals
-                    )
+                    val = self._query_dict_conditionally(subobj, key, required_key, required_vals)
                     if val:
                         arr.append(val)
         return arr
 
-    def _query_dict_conditionally(
-        self, obj: dict, key, required_key, required_vals: list
-    ):
+    def _query_dict_conditionally(self, obj: dict, key, required_key, required_vals: list):
         """Looks up value if other value in dictionary is among accepted values"""
         if obj.get(required_key, None) in required_vals:
             return obj.get(key, None)
@@ -224,30 +212,18 @@ class ComputeBacDiveTraits:
         """
         regex = re.compile(r"[-+]?(?:\d*\.*\d+)")
         if "-" in string:
-            return [
-                float(regex.search(val).group(0).replace("..", "."))
-                for val in string.split("-")
-                if len(val) > 0
-            ]
+            return [float(regex.search(val).group(0).replace("..", ".")) for val in string.split("-") if len(val) > 0]
         else:
             return [float(regex.search(string).group(0))]
 
     def get_reported_media(self) -> list:
-        subsection = self.entry.get("Culture and growth conditions", None).get(
-            "culture medium", {}
-        )
-        media_ids = self._query_list_of_dicts(
-            subsection, "@ref", "growth", ["yes", "positive"]
-        )
+        subsection = self.entry.get("Culture and growth conditions", None).get("culture medium", {})
+        media_ids = self._query_list_of_dicts(subsection, "@ref", "growth", ["yes", "positive"])
         return set(media_ids)
 
     def get_genome_accession_ncbi(self) -> str:
-        subsection = self.entry.get("Sequence information", {}).get(
-            "Genome sequences", {}
-        )
-        accessions = self._query_list_of_dicts(
-            subsection, "accession", "database", ["ncbi"]
-        )
+        subsection = self.entry.get("Sequence information", {}).get("Genome sequences", {})
+        accessions = self._query_list_of_dicts(subsection, "accession", "database", ["ncbi"])
         if len(accessions) > 0:
             accession = accessions[0]
             if len(accession.split(".")) == 1:
@@ -269,54 +245,36 @@ class ComputeBacDiveTraits:
             "phylum",
             "domain",
         ]:
-            taxid = self._query_list_of_dicts(
-                subsection, "NCBI tax id", "Matching level", [level]
-            )
+            taxid = self._query_list_of_dicts(subsection, "NCBI tax id", "Matching level", [level])
             if taxid:
                 return taxid[0]
         return None
 
     def get_species(self) -> str:
-        return self.entry.get("Name and taxonomic classification", {}).get(
-            "species", None
-        )
+        return self.entry.get("Name and taxonomic classification", {}).get("species", None)
 
     def get_reported_oxygen_tolerances(self) -> list:
-        subsection = self.entry.get("Physiology and metabolism", None).get(
-            "oxygen tolerance", {}
-        )
-        tolerances = self._query_list_of_dicts(
-            subsection, "oxygen tolerance", "", [None]
-        )
+        subsection = self.entry.get("Physiology and metabolism", None).get("oxygen tolerance", {})
+        tolerances = self._query_list_of_dicts(subsection, "oxygen tolerance", "", [None])
         return set(tolerances)
 
     def get_reported_temperatures(self) -> list:
         temperatures = []
-        subsection = self.entry.get("Culture and growth conditions", {}).get(
-            "culture temp", {}
-        )
-        for val in self._query_list_of_dicts(
-            subsection, "temperature", "growth", ["yes", "positive"]
-        ):
+        subsection = self.entry.get("Culture and growth conditions", {}).get("culture temp", {})
+        for val in self._query_list_of_dicts(subsection, "temperature", "growth", ["yes", "positive"]):
             temperatures.extend(self._format_values(val))
         return set(temperatures)
 
     def get_reported_phs(self) -> list:
         phs = []
-        subsection = self.entry.get("Culture and growth conditions", {}).get(
-            "culture pH", {}
-        )
-        for val in self._query_list_of_dicts(
-            subsection, "pH", "ability", ["yes", "positive"]
-        ):
+        subsection = self.entry.get("Culture and growth conditions", {}).get("culture pH", {})
+        for val in self._query_list_of_dicts(subsection, "pH", "ability", ["yes", "positive"]):
             phs.extend(self._format_values(val))
         return set(phs)
 
     def get_reported_salinities(self) -> list:
         salinities = []
-        subsection = self.entry.get("Physiology and metabolism", None).get(
-            "halophily", {}
-        )
+        subsection = self.entry.get("Physiology and metabolism", None).get("halophily", {})
         if isinstance(subsection, dict):
             salinities.extend(self.parse_halophily_dict(subsection))
         elif isinstance(subsection, list):
@@ -326,9 +284,7 @@ class ComputeBacDiveTraits:
 
     def get_optimum_ph_min_max(self) -> tuple:
         phs = []
-        subsection = self.entry.get("Culture and growth conditions", {}).get(
-            "culture pH", {}
-        )
+        subsection = self.entry.get("Culture and growth conditions", {}).get("culture pH", {})
         for val in self._query_list_of_dicts(subsection, "pH", "type", ["optimum"]):
             phs.extend(self._format_values(val))
         if len(phs) > 0:
@@ -344,12 +300,8 @@ class ComputeBacDiveTraits:
 
     def get_optimum_temperature(self) -> list:
         temperatures = []
-        subsection = self.entry.get("Culture and growth conditions", {}).get(
-            "culture temp", {}
-        )
-        for val in self._query_list_of_dicts(
-            subsection, "temperature", "type", ["optimum"]
-        ):
+        subsection = self.entry.get("Culture and growth conditions", {}).get("culture temp", {})
+        for val in self._query_list_of_dicts(subsection, "temperature", "type", ["optimum"]):
             temperatures.extend(self._format_values(val))
         if len(temperatures) > 0:
             return np.mean(temperatures)
@@ -358,9 +310,7 @@ class ComputeBacDiveTraits:
 
     def get_optimum_salinity(self) -> list:
         salinities = []
-        subsection = self.entry.get("Physiology and metabolism", None).get(
-            "halophily", {}
-        )
+        subsection = self.entry.get("Physiology and metabolism", None).get("halophily", {})
         if isinstance(subsection, dict):
             salinities.extend(self.parse_halophily_dict(subsection, optimum_only=True))
         elif isinstance(subsection, list):
@@ -373,9 +323,7 @@ class ComputeBacDiveTraits:
 
     def compute_midpoint_salinity(self):
         if len(self.reported_salinities) > 0:
-            return np.mean(
-                [min(self.reported_salinities), max(self.reported_salinities)]
-            )
+            return np.mean([min(self.reported_salinities), max(self.reported_salinities)])
 
     def parse_halophily_dict(self, halophily: dict, optimum_only=False) -> list:
         """
@@ -424,9 +372,7 @@ class ComputeBacDiveTraits:
         else:
             return salinities
 
-    def _onehot_range(
-        arr, min_bin: float, max_bin: float, step: float, prefix: str
-    ) -> dict:
+    def _onehot_range(arr, min_bin: float, max_bin: float, step: float, prefix: str) -> dict:
         """Return onehot ranges formatted with prefixes"""
         onehot_dict = {}
         for bin_floor in np.arange(min_bin, max_bin, step):
@@ -480,9 +426,7 @@ class ComputeBacDiveTraits:
         """Runs screens to flag data as good (True) or bad (False)"""
 
         quality_dict = {
-            "use_ph_optimum": self.screen_optimum(
-                self.ph_optimum, self.ph_min, self.ph_max, optima_to_check=[7, 7.5]
-            ),
+            "use_ph_optimum": self.screen_optimum(self.ph_optimum, self.ph_min, self.ph_max, optima_to_check=[7, 7.5]),
             "use_temperature_optimum": self.screen_optimum(
                 self.temperature_optimum,
                 self.temperature_min,
@@ -496,20 +440,14 @@ class ComputeBacDiveTraits:
                 optima_to_check=[0.5, 3, 3.5],
             ),
             "use_ph_range": self.screen_range(self.ph_min, self.ph_max, min_diff=1),
-            "use_temperature_range": self.screen_range(
-                self.temperature_min, self.temperature_max, min_diff=10
-            ),
-            "use_salinity_range": self.screen_range(
-                self.salinity_min, self.salinity_max, min_diff=0.49
-            ),
+            "use_temperature_range": self.screen_range(self.temperature_min, self.temperature_max, min_diff=10),
+            "use_salinity_range": self.screen_range(self.salinity_min, self.salinity_max, min_diff=0.49),
             "use_oxygen": self.oxygen is not None,
         }
 
         return quality_dict
 
-    def screen_optimum(
-        self, optimum: float, min: float, max: float, optima_to_check: list
-    ):
+    def screen_optimum(self, optimum: float, min: float, max: float, optima_to_check: list):
         """Returns False if the optimum is suspect.
 
         If min and max values are not reported or equal to the optimum,
@@ -638,9 +576,7 @@ if __name__ == "__main__":
         "--credentials",
         help="File with BacDive credentials as: 1st line username, 2nd line password",
     )
-    parser.add_argument(
-        "-min", default=0, help="Lowest BacDive ID to query", required=False
-    )
+    parser.add_argument("-min", default=0, help="Lowest BacDive ID to query", required=False)
     parser.add_argument("-max", help="Highest BacDive ID to query")
     parser.add_argument(
         "-s",
@@ -649,17 +585,11 @@ if __name__ == "__main__":
         help="Optional: filepath to save raw BacDive data as JSON",
         required=False,
     )
-    parser.add_argument(
-        "-e", "--existing", default=None, help="Existing  BacDive data download"
-    )
-    parser.add_argument(
-        "-o", "--output", default="trait_data.json", help="Output JSON name"
-    )
+    parser.add_argument("-e", "--existing", default=None, help="Existing  BacDive data download")
+    parser.add_argument("-o", "--output", default="trait_data.json", help="Output JSON name")
 
     args = parser.parse_args()
-    logging.basicConfig(
-        format="%(levelname)s:%(message)s", encoding="utf-8", level=logging.INFO
-    )
+    logging.basicConfig(format="%(levelname)s:%(message)s", encoding="utf-8", level=logging.INFO)
 
     get_bacdive_trait_data(
         output=args.output,

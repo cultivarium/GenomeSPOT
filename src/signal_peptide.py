@@ -1,6 +1,9 @@
+"""Class to perform prediction of signal peptide presence in proteins"""
+from pathlib import Path
+
 import joblib
 import numpy as np
-from pathlib import Path
+
 
 ROOT_DIR = str(Path(__file__).resolve().parent.parent)
 
@@ -34,8 +37,23 @@ THRESHOLD_LOG_PROB = -134.0
 
 
 class SignalPeptideHMM:
-    def __init__(self):
-        self.model = joblib.load(TRAINED_MODEL)
+    """
+    Class to predict signal peptides in protein sequences of bacteria and archaea.
+
+    See notebooks/make_signal_peptide_hmm.ipynb to understand how the model was produced
+
+    References:
+    - Eddy, S. What is a hidden Markov model?. Nat Biotechnol 22, 1315–1316 (2004).
+    - Pantelis G. Bagos et. al, Combined prediction of Tat and Sec signal peptides with hidden Markov models, Bioinformatics (2010)
+    - Nielsen, H., & Krogh, A. . Prediction of signal peptides and signal anchors by a hidden Markov model. In Ismb (1998).
+    - For comparing accuracy to SignalP versions: Almagro Armenteros et al. SignalP 5.0 improves signal peptide predictions using deep neural networks. Nat Biotechnol (2019)
+
+    Args:
+        model_file: filename of pretrained HMM file, default: model provided in package
+    """
+
+    def __init__(self, model_file: str = TRAINED_MODEL):
+        self.model = joblib.load(model_file)
         self.symbols = SYMBOLS
         self.states = STATES
         self.threshold_log_prob = THRESHOLD_LOG_PROB
@@ -46,13 +64,9 @@ class SignalPeptideHMM:
         self.idx_to_state = dict(zip(range(len(self.states)), self.states))
 
     def _format_protein_sequence(self, protein_sequence) -> np.array:
-        default_symbol = self.symbol_to_idx.get(
-            "G"
-        )  # hack: replace weird codes with glycine
+        default_symbol = self.symbol_to_idx.get("G")  # hack: replace weird codes with glycine
         protein_nterminus = protein_sequence[0 : self.nterminus_length]
-        arr_sequence = np.array(
-            [self.symbol_to_idx.get(aa, default_symbol) for aa in protein_nterminus]
-        ).reshape(-1, 1)
+        arr_sequence = np.array([self.symbol_to_idx.get(aa, default_symbol) for aa in protein_nterminus]).reshape(-1, 1)
         return arr_sequence
 
     def predict_signal_peptide(self, protein_sequence) -> tuple:
@@ -65,9 +79,7 @@ class SignalPeptideHMM:
         else:
             log_prob, pred_state_indices = self.model.decode(input_sequence)
             # Assess probability of being signal peptide
-            has_cut_site = (
-                self.state_to_index[self.signal_end_state] in pred_state_indices
-            )
+            has_cut_site = self.state_to_index[self.signal_end_state] in pred_state_indices
             is_exported = (log_prob > self.threshold_log_prob) and has_cut_site
             # Find cut site
             if is_exported is True:

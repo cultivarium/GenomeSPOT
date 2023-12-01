@@ -565,7 +565,7 @@ def get_bacdive_trait_data(
     return trait_dict
 
 
-if __name__ == "__main__":
+def parse_args():
     parser = argparse.ArgumentParser(
         prog="GetBacDiveTraitData",
         description="Scrapes BacDive API for all strain data and computes traits",
@@ -589,8 +589,13 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", default="trait_data.json", help="Output JSON name")
 
     args = parser.parse_args()
+    return args
+
+
+if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", encoding="utf-8", level=logging.INFO)
 
+    args = parse_args()
     get_bacdive_trait_data(
         output=args.output,
         bacdive_output=args.save_bacdive_download,

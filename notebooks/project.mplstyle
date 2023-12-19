@@ -11,8 +11,8 @@ font.size:    12.0
 
 axes.spines.top : False
 axes.spines.right : False
-xtick.direction : in
-ytick.direction : in
+xtick.direction : out
+ytick.direction : out
 
 
 axes.prop_cycle: cycler('color', ['black', 'slateblue', 'slategray', 'cornflowerblue',  'orangered', 'mediumseagreen','yellowgreen', ])

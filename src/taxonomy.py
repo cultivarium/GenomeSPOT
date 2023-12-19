@@ -19,10 +19,6 @@ from typing import Tuple
 import numpy as np
 
 
-RANDOM_SEED = 1111
-rng = np.random.default_rng(RANDOM_SEED)
-
-
 class TaxonomyGTDB:
     """
     Class for taxonomy operations using the taxonomy
@@ -145,6 +141,11 @@ class TaxonomyGTDB:
             names.append(taxon)
         return tuple(levels), tuple(names)
 
+    def taxonomy_dict_at_taxlevel(self, taxlevel: str) -> dict:
+        """Returns taxonomy at the specified level"""
+        index = self.indices[taxlevel]
+        return {k: v[index] for k, v in self.taxonomy_dict.items()}
+
     def measure_diversity(self, query_rank: str, diversity_rank: str, subset_genomes: list = None) -> dict:
         """Counts the number of taxa at rank `diversity_rank`
         under each taxon of the `query_rank` for a set of genomes.
@@ -209,6 +210,7 @@ class BalanceTaxa:
         taxonomy: TaxonomyGTDB,
     ):
         self.taxonomy = taxonomy
+        self.rng = np.random.default_rng(seed=12345)
 
     def balance_dataset(
         self,
@@ -266,7 +268,7 @@ class BalanceTaxa:
 
         # Use probability to select a certain number of genomes
         n_selections = int(proportion_to_keep * len(genomes))
-        balanced_genomes = rng.choice(
+        balanced_genomes = self.rng.choice(
             genomes,
             n_selections,
             p=probabilities / np.sum(probabilities),
@@ -369,8 +371,32 @@ class PartitionTaxa:
         self.iteration_rank = iteration_rank
         self.diversity_rank = diversity_rank
         self.taxonomy = taxonomy
+        self.rng = np.random.default_rng(seed=12345)
 
     def partition(self, genomes, partition_size: float) -> set:
+        partitioned_genomes = []
+
+        # Get taxa
+        taxa = list(self.taxonomy.taxa_of_genomes(genomes, self.partition_rank))
+        taxon_to_genomes = defaultdict(list)
+        taxlevel_idx = self.taxonomy.indices[self.partition_rank]
+        for genome in genomes:
+            genome_taxonomy = self.taxonomy.taxonomy_dict.get(genome, None)
+            if genome_taxonomy is not None:
+                taxon_to_genomes[genome_taxonomy[taxlevel_idx]].append(genome)
+
+        # Create random order of taxa at partition_rank
+        random_order = self.rng.choice(taxa, size=len(taxa), replace=False)
+
+        # Add to genomes to partition until desired size is reached
+        for taxon in random_order:
+            partitioned_genomes.extend(taxon_to_genomes[taxon])
+            if len(partitioned_genomes) / len(genomes) >= partition_size:
+                break
+
+        return set(partitioned_genomes)
+
+    def old_partition(self, genomes, partition_size: float) -> set:
         """Partitions a dataset.
 
         To ensure a partition set is very diverse, e.g. not all from one phylum,
@@ -402,7 +428,7 @@ class PartitionTaxa:
         # Shuffle
         for taxon, taxa_available in partition_taxa_available.items():
             partition_taxa_available[taxon] = list(
-                rng.choice(list(taxa_available), size=len(taxa_available), replace=False)
+                self.rng.choice(list(taxa_available), size=len(taxa_available), replace=False)
             )
             # rng.shuffle(partition_taxa_available[taxon])
 
@@ -413,7 +439,7 @@ class PartitionTaxa:
         )
         iterator_list = list(iterator_counts.keys())
         iterator_freqs = list(iterator_counts[phylum] / sum(iterator_counts.values()) for phylum in iterator_list)
-        random_iterator_order = rng.choice(iterator_list, n_partition_taxa, p=iterator_freqs, replace=True)
+        random_iterator_order = self.rng.choice(iterator_list, n_partition_taxa, p=iterator_freqs, replace=True)
 
         # Build partition until desired size is reached
         for iteration_taxon in random_iterator_order:

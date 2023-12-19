@@ -22,6 +22,11 @@ import bacdive
 import numpy as np
 
 
+FREQUENT_OPTIMUM_PH = [6.0, 6.5, 6.75, 7.0, 7.25, 7.5, 7.75, 8.0, 8.5, 9.0]
+FREQUENT_OPTIMUM_TEMP = [20.0, 25.0, 26.0, 26.5, 27.5, 28.0, 29.0, 30.0, 31.0, 32.5, 33.5, 35.0, 36.0, 37.0, 40.0]
+FREQUENT_OPTIMUM_SALINITY = [0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.5, 10.0]
+
+
 class QueryBacDive:
     """Downloads all strain data on the BacDive API.
 
@@ -432,61 +437,73 @@ class ComputeBacDiveTraits:
         """Runs screens to flag data as good (True) or bad (False)"""
 
         quality_dict = {
-            "use_ph_optimum": self.screen_optimum(self.ph_optimum, self.ph_min, self.ph_max, optima_to_check=[7, 7.5]),
-            "use_temperature_optimum": self.screen_optimum(
+            "use_ph": self.qc_condition(
+                self.ph_optimum,
+                self.ph_min,
+                self.ph_max,
+                n_values_reported=len(self.reported_phs),
+                required_range=1.5,
+                keep_below=4,
+                keep_above=9,
+                optima_to_check=FREQUENT_OPTIMUM_PH,
+            ),
+            "use_temperature": self.qc_condition(
                 self.temperature_optimum,
                 self.temperature_min,
                 self.temperature_max,
-                optima_to_check=[20, 25, 30, 37],
+                n_values_reported=len(self.reported_temperatures),
+                required_range=10,
+                keep_below=19,
+                keep_above=45,
+                optima_to_check=FREQUENT_OPTIMUM_TEMP,
             ),
-            "use_salinity_optimum": self.screen_optimum(
+            "use_salinity": self.qc_condition(
                 self.salinity_optimum,
                 self.salinity_min,
                 self.salinity_max,
-                optima_to_check=[0.5, 3, 3.5],
+                n_values_reported=len(self.reported_salinities),
+                required_range=0.5,
+                keep_below=-1,
+                keep_above=15,
+                optima_to_check=FREQUENT_OPTIMUM_SALINITY,
             ),
-            "use_ph_range": self.screen_range(self.ph_min, self.ph_max, min_diff=1),
-            "use_temperature_range": self.screen_range(self.temperature_min, self.temperature_max, min_diff=10),
-            "use_salinity_range": self.screen_range(self.salinity_min, self.salinity_max, min_diff=0.49),
             "use_oxygen": self.oxygen is not None,
         }
-
         return quality_dict
 
-    def screen_optimum(self, optimum: float, min: float, max: float, optima_to_check: list):
+    def qc_condition(
+        self,
+        optimum: float,
+        min_: float,
+        max_: float,
+        n_values_reported: int,
+        required_range: float,
+        optima_to_check: list,
+        keep_below: float,
+        keep_above: float,
+    ):
         """Returns False if the optimum is suspect.
 
         If min and max values are not reported or equal to the optimum,
         it is more likely that the experimenter only tested one condition
         and is therefore not reporting the true optimum.
         """
-        use_optimum = True
-        if optimum:
-            for val in optima_to_check:
-                if optimum == val:
-                    if min == optimum or max == optimum:
-                        use_optimum = False
-                    if min is None and max is None:
-                        use_optimum = False
+        use_condition = True
+        if optimum is not None and min_ is not None and max_ is not None:
+            if optimum in optima_to_check:
+                if min_ == optimum or max_ == optimum:
+                    use_condition = False
+                if n_values_reported < 4:
+                    use_condition = False
+            # keep extreme optima - more likely to be accurate
+            if optimum <= keep_below or optimum >= keep_above:
+                use_condition = True
+            elif abs(float(max_) - float(min_)) <= required_range:
+                use_condition = False
         else:
-            use_optimum = False
+            use_condition = False
 
-        return use_optimum
-
-    def screen_range(self, min_: float, max_: float, min_diff: float):
-        """Returns False if the range is suspect.
-
-        Requires both min and max to be reported and the difference
-        between them to be greater than the specified distance.
-        """
-        use_range = False
-        if min_ is not None and max_ is not None:
-            if abs(float(max_) - float(min_)) >= min_diff:
-                use_range = True
-            elif float(min_) == 0 and float(max_) == 0:  # A condition for salinity
-                use_range = True
-
-        return use_range
+        return use_condition
 
     def compute_trait_data(self):
         """

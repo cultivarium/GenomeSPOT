@@ -24,6 +24,8 @@ PREDICTION_BOUNDS = {
     "oxygen": (0, 1),
 }
 
+UNITS = {"temperature": "C", "ph": "pH", "salinity": "% w/v NaCl", "oxygen": "Probability tolerant"}
+
 
 def predict_from_genome(genome_features: dict, path_to_models: str) -> Dict[str, dict]:
     """Predicts growth conditions from genome features for all models specified
@@ -122,16 +124,13 @@ def predict_target_value(X: np.ndarray, model, target: str, method: str = "predi
         y_pred = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
 
     y_pred, warning = check_prediction_range(y_pred, target)
-
+    condition = target.replace("_optimum", "").replace("_min", "").replace("_max", "")
+    units = UNITS[condition]
     # TO-DO: compute confidence intervals
     lower_ci = None
     upper_ci = None
-    prediction_dict = {
-        "value": y_pred,
-        "lower_ci": lower_ci,
-        "upper_ci": upper_ci,
-        "warning": warning,
-    }
+
+    prediction_dict = {"value": y_pred, "lower_ci": lower_ci, "upper_ci": upper_ci, "warning": warning, "units": units}
     return prediction_dict
 
 
@@ -214,7 +213,7 @@ def save_predictions(predictions: dict, output_tsv: str) -> str:
     """Saves ouput of `predict_with_all_models` to a tab-separated table"""
     with open(output_tsv, "w", encoding="utf-8") as fh:
         lines = []
-        lines.append("\t".join(["target", "value", "lower_ci", "upper_ci"]))
+        lines.append("\t".join(["target", "value", "lower_ci", "upper_ci", "units"]))
         for target in sorted(predictions):
             values = predictions[target]
             line = [
@@ -222,6 +221,7 @@ def save_predictions(predictions: dict, output_tsv: str) -> str:
                 str(values["value"]),
                 str(values["lower_ci"]),
                 str(values["upper_ci"]),
+                str(values["units"]),
             ]
             lines.append("\t".join(line))
         fh.write("\n".join(lines))

@@ -1,6 +1,6 @@
 # Genome-OPTS
 
-Predicts pH, temperature, oxygen, and salinity preferences from bacterial and archaeal genomes using models trained on diverse, phylogenetically balanced sets of isolates.
+Predicts pH, temperature (C), oxygen (probability tolerant), and salinity (% w/v NaCl) preferences from bacterial and archaeal genomes using models trained on diverse, phylogenetically balanced sets of isolates.
 
 Reference:
 > (reference)

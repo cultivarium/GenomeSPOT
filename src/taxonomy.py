@@ -240,7 +240,9 @@ class BalanceTaxa:
         obs_exp_ratio_by_rank = {}
         for rank, i in self.taxonomy.indices.items():
             obs_exp_ratio_by_rank[i] = {}
-            n_expected = self.taxonomy.measure_diversity(rank, diversity_rank)
+            all_genomes = list(self.taxonomy.taxonomy_dict.keys())
+            one_genome_per_species = self.select_genomes_at_rank(all_genomes, rank="species", n_genomes=1)
+            n_expected = self.taxonomy.measure_diversity(rank, diversity_rank, subset_genomes=one_genome_per_species)
             n_observed = self.taxonomy.measure_diversity(rank, diversity_rank, subset_genomes=genomes)
             for taxon, n_obs in n_observed.items():
                 obs_exp_ratio = n_obs / n_expected[taxon]

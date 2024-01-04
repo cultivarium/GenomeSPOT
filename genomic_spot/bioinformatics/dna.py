@@ -4,7 +4,7 @@ from collections import defaultdict
 from itertools import product
 from typing import Dict
 
-from helpers import count_kmers
+from ..helpers import count_kmers
 
 
 class DNA:

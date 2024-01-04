@@ -10,23 +10,42 @@ from pathlib import Path
 from typing import Dict
 
 import numpy as np
-from dna import DNA
-from helpers import iterate_fasta
-from protein import (
+
+from ..helpers import iterate_fasta
+from .dna import DNA
+from .protein import (
     DIFF_HYDROPHOBICITY_MEMBRANE,
     Protein,
 )
-from signal_peptide import SignalPeptideHMM
+from .signal_peptide import SignalPeptideHMM
 
 
 class Genome:
+    """
+    Calculates metrics from Protein and DNA classes for a genome.
+
+    The ability to subsample proteins and DNA is available for analysis.
+    If subsampling is used, the statistics are computed on a random
+    proteins at the specific proportion and computed on contigs where
+    a random slice of the contig is taken at the specific proportion.
+
+    Args:
+        contig_filepath: str, path to fasta file of contigs
+        protein_filepath: str, path to fasta file of proteins
+        subsample: float, fraction of proteins and nucleotides to subsample
+    """
+
     def __init__(
         self,
         contig_filepath: str,
         protein_filepath: str,
+        subsample: float = 1.0,
     ):
         self.fna_filepath = str(contig_filepath)
         self.faa_filepath = str(protein_filepath)
+        if subsample > 1 or subsample < 0:
+            raise ValueError("Subsample must be between 0 and 1")
+        self.subsample = subsample
         if Path(self.fna_filepath).exists() is False:
             raise ValueError(f"Input file {self.fna_filepath} does not exist")
         if Path(self.faa_filepath).exists() is False:
@@ -57,6 +76,13 @@ class Genome:
                     remove_signal_peptide=True,
                 ).protein_metrics()
             fh.close()
+
+            # randomly subsample dictionary
+            if self.subsample < 1.0:
+                subsample_size = int(self.subsample * len(self._protein_data))
+                random_proteins = np.random.choice(list(self._protein_data.keys()), size=subsample_size)
+                self._protein_data = {k: self._protein_data[k] for k in random_proteins}
+
         return self._protein_data
 
     def compute_protein_statistics(self, subset_proteins: set = None) -> Dict[str, float]:
@@ -163,9 +189,15 @@ class Genome:
         fh.seek(0)
         genome = ""
         for header, sequence in iterate_fasta(fh):
+            # sample random slice of string
+            if self.subsample < 1.0:
+                len_sample = int(self.subsample * len(sequence))
+                left_index = np.random.randint(0, len(sequence) - len_sample, size=1)[0]
+                sequence = sequence[left_index : (len_sample + left_index)]
+
             genome += "NN" + sequence
         fh.close()
-
+        #
         nucleotide_calc = DNA(genome)
         genome_statistics.update(nucleotide_calc.nucleotide_metrics())
         return genome_statistics

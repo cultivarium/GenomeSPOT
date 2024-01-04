@@ -13,7 +13,8 @@ from typing import (
 import joblib
 import numpy as np
 import pandas as pd
-from genome import Genome
+
+from .bioinformatics.genome import Genome
 
 
 # Used to bound predictions to sensical values/ranges from training

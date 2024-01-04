@@ -5,8 +5,6 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from helpers import rename_condition_to_variable
-from make_holdout_sets import balance_but_keep_extremes
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import (
@@ -21,10 +19,13 @@ from sklearn.model_selection import (
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from taxonomy import (
+
+from ..helpers import rename_condition_to_variable
+from ..taxonomy import (
     BalanceTaxa,
     TaxonomyGTDB,
 )
+from .make_holdout_sets import balance_but_keep_extremes
 
 
 rng = np.random.default_rng(0)

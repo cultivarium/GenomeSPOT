@@ -8,10 +8,6 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from helpers import (
-    load_cv_sets,
-    split_train_and_test_data,
-)
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import (
     SelectFromModel,
@@ -37,11 +33,18 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
+from ..helpers import (
+    load_cv_sets,
+    prepend_features,
+    rename_condition_to_variable,
+    split_train_and_test_data,
+)
+
 # from helpers import (
 #     prepend_features,
 #     rename_condition_to_variable,
 # )
-from train_models import (
+from .train_models import (
     predict_training_and_cv,
     score_classification,
     score_regression,
@@ -49,18 +52,18 @@ from train_models import (
 )
 
 
-def rename_condition_to_variable(condition, attribute="optimum"):
-    """Commonly used to turn a condition e.g. 'temperature'
-    to a variable e.g. 'temperature_optimum'"""
-    if condition == "oxygen":
-        return "oxygen"
-    else:
-        return condition + "_" + attribute
+# def rename_condition_to_variable(condition, attribute="optimum"):
+#     """Commonly used to turn a condition e.g. 'temperature'
+#     to a variable e.g. 'temperature_optimum'"""
+#     if condition == "oxygen":
+#         return "oxygen"
+#     else:
+#         return condition + "_" + attribute
 
 
-def prepend_features(features, prefices):
-    """useful for assigning localization to features"""
-    return [f"{prefix}_{feature}" for prefix in prefices for feature in features]
+# def prepend_features(features, prefices):
+#     """useful for assigning localization to features"""
+#     return [f"{prefix}_{feature}" for prefix in prefices for feature in features]
 
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%H:%M:%S")

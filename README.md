@@ -1,4 +1,4 @@
-# Genome-OPTS
+# Genomic-SPOT: prediction of optimum growth conditions from a genome
 
 Predicts pH, temperature (C), oxygen (probability tolerant), and salinity (% w/v NaCl) preferences from bacterial and archaeal genomes using models trained on diverse, phylogenetically balanced sets of isolates.
 

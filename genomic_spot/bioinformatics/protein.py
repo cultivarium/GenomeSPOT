@@ -10,8 +10,9 @@ from typing import Dict
 
 import numpy as np
 from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
-from helpers import count_kmers
-from signal_peptide import SignalPeptideHMM
+
+from ..helpers import count_kmers
+from .signal_peptide import SignalPeptideHMM
 
 
 STANDARD_AMINO_ACIDS = {

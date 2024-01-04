@@ -4,11 +4,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from helpers import (
+
+from ..helpers import (
     load_train_and_test_sets,
     rename_condition_to_variable,
 )
-from taxonomy import (
+from ..taxonomy import (
     BalanceTaxa,
     PartitionTaxa,
     TaxonomyGTDB,
@@ -67,7 +68,7 @@ def balance_but_keep_extremes(
         len(balanced_genomes),
         len(balanced_genomes) / len(genomes_for_use),
     )
-    return balanced_genomes
+    return sorted(balanced_genomes)
 
 
 def make_balanced_partitions_for_variable(
@@ -78,7 +79,7 @@ def make_balanced_partitions_for_variable(
     partitioner,
     percentile_bins,
 ):
-    genomes_for_use = df_data.index.drop_duplicates().tolist()
+    genomes_for_use = sorted(df_data.index.drop_duplicates().tolist())
     logging.info(
         "%s: Genomes input for use: %i",
         target,
@@ -109,7 +110,7 @@ def make_balanced_partitions_for_variable(
         len(train_set) / len(balanced_genomes),
     )
 
-    return test_set, train_set
+    return sorted(test_set), sorted(train_set)
 
 
 def partition_within_percentiles(balanced_df, target, percentile_bins, partitioner, partition_size):
@@ -136,7 +137,7 @@ def partition_within_percentiles(balanced_df, target, percentile_bins, partition
             percentile_max,
             len(partitioned_genomes_in_bin),
         )
-    return partitioned_genomes
+    return sorted(partitioned_genomes)
 
 
 def save_partitions(test_set, train_set, test_file, train_file, overwrite=True):

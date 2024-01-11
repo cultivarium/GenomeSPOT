@@ -4,6 +4,7 @@ import json
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
+from operator import is_
 from typing import (
     Dict,
     Tuple,
@@ -45,6 +46,7 @@ def predict_from_genome(genome_features: dict, path_to_models: str) -> Dict[str,
     predictions = defaultdict(dict)
     instructions = load_instructions(f"{path_to_models}/instructions.json")
     for condition in instructions.keys():
+        novelty_model = joblib.load(f"{path_to_models}/novelty_{condition}.joblib")
         if condition in ["ph", "temperature", "salinity"]:
             features = instructions[condition]["features"]
             X = genome_features_to_input_arr(features, genome_features)
@@ -55,13 +57,18 @@ def predict_from_genome(genome_features: dict, path_to_models: str) -> Dict[str,
             ]:
                 target = f"{condition}_{attribute}"
                 model = joblib.load(f"{path_to_models}/{target}.joblib")
-                predictions[target] = predict_target_value(target=target, X=X, model=model)
+                error_model = joblib.load(f"{path_to_models}/error_{target}.joblib")
+                predictions[target] = predict_target_value(
+                    target=target, X=X, model=model, error_model=error_model, novelty_model=novelty_model
+                )
         elif condition == "oxygen":
             target = condition
             features = instructions[condition]["features"]
             model = joblib.load(f"{path_to_models}/{target}.joblib")
             X = genome_features_to_input_arr(features, genome_features)
-            predictions[target] = predict_target_value(target=target, X=X, model=model, method="predict_proba")
+            predictions[target] = predict_target_value(
+                target=target, X=X, model=model, method="predict_proba", error_model=None, novelty_model=novelty_model
+            )
     return predictions
 
 
@@ -107,7 +114,9 @@ def genome_features_to_input_arr(features: list, genome_features: dict) -> np.nd
     return X
 
 
-def predict_target_value(X: np.ndarray, model, target: str, method: str = "predict") -> Dict[str, float]:
+def predict_target_value(
+    X: np.ndarray, model, target: str, method: str = "predict", error_model=None, novelty_model=None
+) -> Dict[str, float]:
     """Predicts a value and confidence intervals.
 
     Args:
@@ -119,20 +128,55 @@ def predict_target_value(X: np.ndarray, model, target: str, method: str = "predi
         prediction_dict: Dict containing the predicted value and upper and lower limit
             of confidence intervals
     """
-    if method == "predict":
-        y_pred = model.predict(X)[0]
-    elif method == "predict_proba":
-        y_pred = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
-
-    y_pred, warning = check_prediction_range(y_pred, target)
     condition = target.replace("_optimum", "").replace("_min", "").replace("_max", "")
     units = UNITS[condition]
-    # TO-DO: compute confidence intervals
-    lower_ci = None
-    upper_ci = None
+    error = None
+    # probability = None
+    warning = None
+    novelty = None
 
-    prediction_dict = {"value": y_pred, "lower_ci": lower_ci, "upper_ci": upper_ci, "warning": warning, "units": units}
+    if method == "predict":
+        y_pred = model.predict(X)[0]
+        y_pred, warning = check_prediction_range(y_pred, target)
+        if error_model is not None:
+            error = predict_error(y_pred, error_model)
+    elif method == "predict_proba":
+        y_pred = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
+        # y_pred = "tolerant" if y_pred_prob > 0.5 else "intolerant"
+        # probability = y_pred_prob if y_pred_prob > 0.5 else 1 - y_pred_prob
+
+    if novelty_model is not None:
+        novelty = predict_novelty(X, novelty_model)
+
+    prediction_dict = {
+        "value": y_pred,
+        "error": error,
+        "is_novel": novelty,
+        "warning": warning,
+        "units": units,
+    }
     return prediction_dict
+
+
+def predict_error(y: float, error_arr: np.ndarray):
+    """References an array where col 1 is a predicted value
+    and col 2 is the RMSE of values predicted to be y +/- interval"""
+    closest_reference = np.argmin(np.abs(error_arr[:, 0] - y))
+    ref_y, ref_err = error_arr[closest_reference]
+    return ref_err
+
+
+def predict_novelty(X: np.ndarray, novelty_model):
+    """Predicts novelty using novelty detection model.
+
+    Novelty detection compares a model to the training set to determine if
+    a a new observation is within the range of the training set.
+    The novelty detection algorithm (OneClassSVM) returns 1
+    if not novel and -1 if novel. X must have the same features
+    as the data the model was trained on.
+    """
+    is_novel = False if novelty_model.predict(X) == 1 else True
+    return is_novel
 
 
 def check_prediction_range(y_pred: float, target: str) -> Tuple[float, Union[str, None]]:

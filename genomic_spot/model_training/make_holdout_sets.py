@@ -45,8 +45,10 @@ def balance_but_keep_extremes(
     # Remove genomes by bias in dataset
     condition = target.split("_")[0]
     balance_proportion = BALANCE_PROPORTIONS[condition]
-    balanced_genomes = balancer.balance_dataset(
-        genomes=genomes_for_use, proportion_to_keep=balance_proportion, diversity_rank="species"
+    balanced_genomes = set(
+        balancer.balance_dataset(
+            genomes=genomes_for_use, proportion_to_keep=balance_proportion, diversity_rank="species"
+        )
     )
 
     logging.info(

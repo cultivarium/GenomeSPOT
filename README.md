@@ -30,7 +30,7 @@ Recommended:
 Runtime: ~5-10 seconds per genome
 
 ```shell
-python src/predict_physicochemistry.py --models models \
+python -m genomic_spot.genomic_spot --models models \
     --contigs tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz \
     --proteins tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz \
     --output GCA_000172155.1
@@ -52,24 +52,25 @@ Hint: for thousands of genomes, run in parallel using:
 ## 3. Interpret output
 
 Each prediction (e.g. optimum temperature) has: 
-- **A predicted value**: For oxygen, the predicted value is a probability of oxygen tolerance between [0,1]. For continuous variables, values are in the units C for temperature, %w/v sodium chloride for salinity, and standard units for pH. 
-- **A confidence interval**: The lower and upper limits of the confidence interval for that value
+- **A predicted value and units**: For oxygen, the predicted value is a probability of oxygen tolerance between [0,1]. We recommend basing decisions on highly confidence predictions only (p<0.25 means obligate anaerobe, p>0.75 means aerobe, between means uncertain). For continuous variables, values are in the units C for temperature, %w/v sodium chloride for salinity, and standard units for pH. 
+- **An estimated error**: For continuous variables only. The error is the root mean squared error (RSME) for cross-validation predictions in the training dataset that were within +/-0.5 pH units, +/-1 % NaCl, or +/-5 C of the predicted value. For oxygen, the probability should be used to assess confidence.
+- **A novelty detection**: [Novelty detection](https://scikit-learn.org/stable/modules/outlier_detection.html#novelty-detection) is like outlier detection, except it is based on a training dataset. For each condition, a genome is novel if its features are more unusual that 98% of the training data. On GTDB genomes, we observed ~4% of genomes have unusual features for oxygen and temperature prediction, and ~10-15% of genomes have unusual features for salinity and pH prediction.
 - **A warning flag**: raised if the predicted value initially exceeded the sensical range (values observed in published data) and was set to the min or max allowed value. If a warning flag exists, the prediction should be considered suspect unless it's a predicted salinity minimum or optimum at 0, which is common. 
 
 Here is the output for the test genome:
 
 ```
-                         value  lower_ci  upper_ci  warning
-temperature_optimum  27.934813       NaN       NaN      NaN
-temperature_max      35.297075       NaN       NaN      NaN
-temperature_min      15.892330       NaN       NaN      NaN
-ph_optimum            7.244327       NaN       NaN      NaN
-ph_max                8.734173       NaN       NaN      NaN
-ph_min                5.374512       NaN       NaN      NaN
-salinity_optimum      4.434118       NaN       NaN      NaN
-salinity_max          7.258816       NaN       NaN      NaN
-salinity_min          2.509730       NaN       NaN      NaN
-oxygen                0.981243       NaN       NaN      NaN
+                         value     error is_novel       warning           units
+temperature_optimum  29.968543  5.835226    False          None               C
+temperature_max      38.087803  5.757588    False          None               C
+temperature_min      13.166659  7.179667    False          None               C
+ph_optimum            7.527958  0.880036    False          None              pH
+ph_max                9.509584  1.101179    False          None              pH
+ph_min                5.642458  0.994403    False          None              pH
+salinity_optimum      0.807071  1.567823    False          None      % w/v NaCl
+salinity_max          4.886699  2.768601    False          None      % w/v NaCl
+salinity_min                 0  1.393914    False  min_exceeded      % w/v NaCl
+oxygen                0.954284      None    False          None  prob. tolerant
 ```
 
 
@@ -125,3 +126,7 @@ gunzip data/references/*tsg.gz
 ## Train models and select best model with cross-validation
 
 ## Produce final model on all data
+
+```shell
+python3 -m genomic_spot.model_training.train_models --training_data_filename data/training_data/training_data_20231203.tsv --path_to_models models
+```

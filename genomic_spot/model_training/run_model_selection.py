@@ -39,16 +39,11 @@ from ..helpers import (
     rename_condition_to_variable,
     split_train_and_test_data,
 )
-
-# from helpers import (
-#     prepend_features,
-#     rename_condition_to_variable,
-# )
+from .make_holdout_sets import yield_cv_sets
 from .train_models import (
     predict_training_and_cv,
     score_classification,
     score_regression,
-    yield_cv_sets,
 )
 
 

@@ -4,7 +4,6 @@ import json
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
-from operator import is_
 from typing import (
     Dict,
     Tuple,
@@ -18,6 +17,8 @@ import pandas as pd
 from .bioinformatics.genome import Genome
 
 
+logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)s %(message)s")
+
 # Used to bound predictions to sensical values/ranges from training
 PREDICTION_BOUNDS = {
     "temperature": (0, 105),
@@ -26,7 +27,7 @@ PREDICTION_BOUNDS = {
     "oxygen": (0, 1),
 }
 
-UNITS = {"temperature": "C", "ph": "pH", "salinity": "% w/v NaCl", "oxygen": "Probability tolerant"}
+UNITS = {"temperature": "C", "ph": "pH", "salinity": "% w/v NaCl", "oxygen": "prob. tolerant"}
 
 
 def predict_from_genome(genome_features: dict, path_to_models: str) -> Dict[str, dict]:
@@ -248,26 +249,23 @@ def save_results(predictions: dict, genome_features: dict, output_prefix: str, s
         intermediate_output = str(output_prefix) + ".features.json"
         logging.info("Saving intermediate to %s", intermediate_output)
         json.dump(genome_features, open(intermediate_output, "w", encoding="utf-8"))
+        return genome_features
     if output_prefix is not None and predictions is not None:
         output = str(output_prefix) + ".predictions.tsv"
         logging.info("Saving output to: %s", output)
-        save_predictions(predictions, output_tsv=output)
+        output_tsv = save_predictions(predictions, output_tsv=output)
+        return output_tsv
 
 
 def save_predictions(predictions: dict, output_tsv: str) -> str:
     """Saves ouput of `predict_with_all_models` to a tab-separated table"""
     with open(output_tsv, "w", encoding="utf-8") as fh:
         lines = []
-        lines.append("\t".join(["target", "value", "lower_ci", "upper_ci", "units"]))
+        cols = ["target", "value", "error", "units", "is_novel", "warning"]
+        lines.append("\t".join(cols))
         for target in sorted(predictions):
             values = predictions[target]
-            line = [
-                target,
-                str(values["value"]),
-                str(values["lower_ci"]),
-                str(values["upper_ci"]),
-                str(values["units"]),
-            ]
+            line = [target] + [str(values[col]) for col in cols[1:]]
             lines.append("\t".join(line))
         fh.write("\n".join(lines))
         return output_tsv

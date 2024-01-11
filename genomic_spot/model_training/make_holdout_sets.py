@@ -244,6 +244,12 @@ def make_cv_sets_randomly(genomes: np.ndarray, partition_rank="family", kfold=5)
     return cv_sets
 
 
+def yield_cv_sets(cv_sets):
+    """Generator for sklearn to handle CV sets"""
+    for training_indices, validation_indices in cv_sets:
+        yield training_indices, validation_indices
+
+
 def convert_cv_sets_to_json_format(cv_sets):
     json_serializable_sets = []
     for training_indices, validation_indices in cv_sets:

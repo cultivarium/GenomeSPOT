@@ -82,7 +82,7 @@ def load_instructions(instructions_filename: str) -> dict:
     Args:
         instructions_filename: filepath to insructions file
     """
-    with open(instructions_filename) as fh:
+    with open(instructions_filename, "r") as fh:
         instructions = json.loads(fh.read())
     return instructions
 
@@ -208,11 +208,7 @@ def load_genome_features(features_json: str) -> Dict[str, dict]:
 
 def measure_genome_features(faa_path: str, fna_path: str) -> Dict[str, dict]:
     """Measure features from the provided genome files"""
-    logging.info(
-        "Measuring features from:\n\t%s\n\t%s",
-        fna_path,
-        faa_path,
-    )
+    logging.info("Measuring features from:\n\t%s\n\t%s", fna_path, faa_path)
     genome_features = Genome(
         contig_filepath=fna_path,
         protein_filepath=faa_path,

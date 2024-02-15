@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
-
+from setuptools import (
+    find_packages,
+    setup,
+)
 from src._version import __version__
+
 
 setup(
     name="genome_opts",
@@ -14,7 +17,7 @@ setup(
     license="MIT License",
     package_data={"genome_opts": []},
     packages=find_packages(exclude=["tests"]),
-    scripts=["src/"],
+    scripts=["genomic_spot/"],
     python_requires=">=3.8.16",
     install_requires=[
         "biopython>=1.81",

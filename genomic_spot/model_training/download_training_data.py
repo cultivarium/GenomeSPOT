@@ -20,6 +20,7 @@ from typing import (
 
 import bacdive
 import numpy as np
+import pandas as pd
 
 
 FREQUENT_OPTIMUM_PH = [6.0, 6.5, 6.75, 7.0, 7.25, 7.5, 7.75, 8.0, 8.5, 9.0]
@@ -580,14 +581,17 @@ def get_bacdive_trait_data(
         genome_accession = strain_traits.get("ncbi_accession", None)
         if genome_accession:
             trait_dict[genome_accession] = strain_traits
-    json.dump(trait_dict, open(output, "w"))
+    # json.dump(trait_dict, open(output, "w"))
+    # Save trait data as a pandas dataframe
+    df_targets = pd.DataFrame(trait_dict).T
+    df_targets.to_csv(output, sep=',')
 
     # Save genome list
     with open("genbank_accessions.txt", "w") as fh:
         accessions = trait_dict.keys()
         fh.write("\n".join(accessions))
 
-    return trait_dict
+    return df_targets
 
 
 def parse_args():
@@ -625,7 +629,7 @@ if __name__ == "__main__":
     logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
     args = parse_args()
-    get_bacdive_trait_data(
+    df_targets = get_bacdive_trait_data(
         output=args.output,
         bacdive_output=args.save_bacdive_download,
         bacdive_username=args.username,

@@ -19,15 +19,20 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import Pipeline
 from sklearn.svm import OneClassSVM
 
-from ..helpers import rename_condition_to_variable
-from ..taxonomy import (
-    BalanceTaxa,
-    TaxonomyGTDB,
+from ..helpers import (
+    load_training_data,
+    rename_condition_to_variable,
 )
 from .make_holdout_sets import (
+    BALANCE_PROPORTIONS,
+    THRESHOLDS_TO_KEEP,
     balance_but_keep_extremes,
     make_cv_sets_by_phylogeny,
     yield_cv_sets,
+)
+from .taxonomy import (
+    BalanceTaxa,
+    TaxonomyGTDB,
 )
 
 
@@ -51,18 +56,6 @@ def load_instructions(instructions_filename: str) -> dict:
             assert "features" in instructions[condition].keys()
 
     return instructions
-
-
-def load_training_data(training_data_filename) -> pd.DataFrame:
-    """Loads training data
-
-    Args:
-        training_data_filename (str): path to training data
-    Returns:
-        training_df (pd.DataFrame): training data
-    """
-    training_df = pd.read_csv(training_data_filename, sep="\t", index_col=0)
-    return training_df
 
 
 def train_model(
@@ -211,6 +204,25 @@ def predict_training_and_cv(
     return pipeline, y_train_pred, y_valid_pred
 
 
+def predict_and_score(condition, X_train, y_train, cv_sets, pipeline):
+    """Predict and score the performance of a pipeline on a given condition."""
+    if condition in ["temperature", "salinity", "ph"]:
+        pipeline, y_train_pred, y_valid_pred = predict_training_and_cv(
+            X_train, y_train, pipeline=pipeline, cv=yield_cv_sets(cv_sets), method="predict"
+        )
+        validation_statistics = score_regression(y_train, y_valid_pred)
+    elif condition == "oxygen":
+        pipe, y_train_pred_probs, y_valid_pred_probs = predict_training_and_cv(
+            X_train,
+            y_train,
+            pipeline=pipeline,
+            cv=yield_cv_sets(cv_sets),
+            method="predict_proba",
+        )
+        validation_statistics = score_classification(y_train.values, y_valid_pred_probs[:, 1])
+    return validation_statistics
+
+
 def score_regression(y_true, y_pred) -> dict:
     """Provides a dictionary of common statistics for regression models.
 
@@ -302,11 +314,16 @@ def train_models_for_each_condition(
     condition_df = df[df[f"use_{condition}"] == True]
     logging.info("%s data available for %s genomes", condition, len(condition_df))
 
+    balance_proportion = BALANCE_PROPORTIONS[condition]
+    keep_below, keep_above = THRESHOLDS_TO_KEEP[condition]
     balanced_genomes = balance_but_keep_extremes(
         df_data=condition_df,
         target=target,
         genomes_for_use=condition_df.index.drop_duplicates().tolist(),
         balancer=balancer,
+        balance_proportion=balance_proportion,
+        keep_below=keep_below,
+        keep_above=keep_above,
     )
     training_df = condition_df.loc[list(balanced_genomes)]
     logging.info("%s data available for %s genomes after balancing", condition, len(training_df))

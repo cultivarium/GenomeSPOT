@@ -46,6 +46,15 @@ gzip genome.fna
 Hint: for thousands of genomes, run in parallel using:
 
 ```shell
+INDIR='data/features-v4'
+OUTDIR='data/predictions'
+for FEATURES_JSON in `ls $INDIR`; 
+do
+PREFIX=$(echo $FEATURES_JSON | cut -d. -f1);
+echo $FEATURES_JSON $PREFIX;
+python -m genomic_spot.genomic_spot --models models --genome-features $INDIR/$FEATURES_JSON --output $OUTDIR/$PREFIX > temp.txt &;
+pwait 10
+done
 ```
 
 
@@ -92,9 +101,9 @@ oxygen                0.954284      None    False          None  prob. tolerant
 
 # Model training and evaluation
 
-Users may be interested in replicating this work using the provided modules and scientific notebooks.
+Users may be interested in replicating this work using the provided modules and scientific notebooks. Note that steps 1, 2, and 4 requires long periods of time.
 
-## Download data for training
+## 1. Download data for training
 
 Data is downloaded from two resources:
 
@@ -107,7 +116,7 @@ NOTE: this takes a long time.
 # Download BacDive data
 vi .bacdive_credentials # username on line 1, password on line 2
 MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
-python3 src/model_training/download_training_data.py -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
+python3 -m genomic_spot.model_training.download_training_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
     --max $MAX_BACDIVE_ID \
     -s raw_bacdive_data.json \
     -o traits.json
@@ -121,12 +130,60 @@ wget https://data.gtdb.ecogenomic.org/releases/latest/bac120_metadata.tsv.gz
 mv *.tsv.gz data/references/.
 gunzip data/references/*tsg.gz
 ```
-## Prepare data
 
-## Train models and select best model with cross-validation
 
-## Produce final model on all data
+
+## 2. Generate training dataframe
+
+Measure features
+
+```shell
+```
+
+Load and join features (from genomes) and target data (from BacDive):
+
+```shell
+```
+
+
+## 3. Create train, test, and cross-validation sets
+
+The above script proThe flag `use_<condition>` is set by an automated curation step when data is downloaded from BacDive. Only genomes for which the flag is `True`` are used further. You may want to perform additional curation to remove suspect values, as we did for curation.
+
+The function `make_holdout_sets` performs two different types of operations:
+
+1. **Phylogenetic balancing**: This removes genomes from taxa that are more common than expected. We remove 50% of genomes, preferentially removing taxa more common in BacDive than in the Genome Taxonomy Database. For example, Pseudomonadota over Verrucomicrobiota and Escherichia over Ktedonobacter.
+2. **Phylogenetic partitioning**: This splits the dataset by taxonomy to prevent "data leakage" caused by phylogenetic similarity. To create a test set, we select random families adding up to 20% of the genomes in the dataset. To ensure extreme values are included in both the training and test dataset, extreme values are split separately, which means that a family can be present in both the training and test dataset, but the family members will have different growth conditions.
+
+Using these operations:
+1. Genomes are balanced and partitioned at the family level into **training and test sets** for each condition being predicted. Genome accessions are recorded in files like `<path_to_holdouts>/train_set_<condition>.txt`
+2. Genomes in the training set are further divided for **cross-validation**. In each fold of a cross-validation, a different set of genomes are held out of model training and used to score the model. The default script performs 5-fold cross-validation, for each rank in phylum, class, order, family, genus, and species. Genome accessions are stored in `<path_to_holdouts>/<condition>_cv_sets.json`, keyed by rank and in list of tuples of `(training_indices, validation_indices)`.
+
+Command line:
+
+```shell
+# Create train, test, and cross-validation sets
+python3 -m genomic_spot.model_training.make_holdout_sets --training_data_filename  data/training_data/training_data_20231203.tsv --path_to_holdouts
+```
+
+## 4. Train models and select best model with cross-validation
+
+Generate train / test holdouts:
+```shell
+python3 -m genomic_spot.model_training.make_holdout_sets --overwrite False --training_data_filename data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts
+```
+
+Optional: run various sets of features and models to find the best.
+```shell
+python3 -m genomic_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/
+```
+
+## 5. Produce final model on all data
 
 ```shell
 python3 -m genomic_spot.model_training.train_models --training_data_filename data/training_data/training_data_20231203.tsv --path_to_models models
 ```
+
+## 6. Evaluate model training and performance
+
+Scientific notebooks are provided to reproduce analyses.

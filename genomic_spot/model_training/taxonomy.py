@@ -366,11 +366,9 @@ class PartitionTaxa:
         self,
         taxonomy: TaxonomyGTDB,
         partition_rank: str = "family",
-        iteration_rank: str = "phylum",
         diversity_rank: str = "genus",
     ):
         self.partition_rank = partition_rank
-        self.iteration_rank = iteration_rank
         self.diversity_rank = diversity_rank
         self.taxonomy = taxonomy
 

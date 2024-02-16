@@ -23,6 +23,7 @@ from ..helpers import (
     load_training_data,
     rename_condition_to_variable,
 )
+from .balance import BalanceTaxa
 from .make_holdout_sets import (
     BALANCE_PROPORTIONS,
     THRESHOLDS_TO_KEEP,
@@ -30,10 +31,7 @@ from .make_holdout_sets import (
     make_cv_sets_by_phylogeny,
     yield_cv_sets,
 )
-from .taxonomy import (
-    BalanceTaxa,
-    TaxonomyGTDB,
-)
+from .taxonomy import TaxonomyGTDB
 
 
 logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)s %(message)s")

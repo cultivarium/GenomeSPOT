@@ -43,9 +43,19 @@ prodigal -i genome.fna -a protein.faa # get proteins
 gzip genome.fna
 ```
 
-Hint: for thousands of genomes, run in parallel using:
+### Parallelization
+
+A simple option is to use a shell function pwait to perform x processes at once ([reference](https://stackoverflow.com/questions/38160/parallelize-bash-script-with-maximum-number-of-processes/880864#880864)). The below example runs 10 jobs at once.
 
 ```shell
+# Define pwait
+function pwait() {
+    while [ $(jobs -p | wc -l) -ge $1 ]; do
+        sleep 1
+    done
+}
+
+# Run in parallel
 INDIR='data/features-v4'
 OUTDIR='data/predictions'
 for FEATURES_JSON in `ls $INDIR`; 
@@ -113,36 +123,41 @@ Data is downloaded from two resources:
 NOTE: this takes a long time.
 
 ```shell
+# Create directory structure
+mkdir data
+mkdir data/training_data
+mkdir data/genomes
+mkdir data/references
+
 # Download BacDive data
 vi .bacdive_credentials # username on line 1, password on line 2
 MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
 python3 -m genomic_spot.model_training.download_training_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
     --max $MAX_BACDIVE_ID \
-    -s raw_bacdive_data.json \
-    -o traits.json
+    -s data/training_data/bacdive_data.json
 
-# Download genomes
+# Download genomes using
+# list created by above function
 ncbi-genome-download -s genbank -F 'fasta,protein-fasta' -o data/genomes -A genbank_accessions.txt 'bacteria,archaea'
 
-# Download GTDB metadata helpful for analysis
+# Download GTDB metadata to provide taxonomy
+# needed for modeling correctly
 wget https://data.gtdb.ecogenomic.org/releases/latest/ar53_metadata.tsv.gz
 wget https://data.gtdb.ecogenomic.org/releases/latest/bac120_metadata.tsv.gz
 mv *.tsv.gz data/references/.
 gunzip data/references/*tsg.gz
 ```
 
-
-
 ## 2. Generate training dataframe
 
-Measure features
+Measure features from genomes and join them with the target variables to be predicted - i.e. trait data from BacDive.
 
 ```shell
-```
-
-Load and join features (from genomes) and target data (from BacDive):
-
-```shell
+python3 -m genomic_spot.model_training.make_training_dataset -p 7 \ 
+    --genomes-directory ./data/genomes/ \ 
+    --features-directory ./data/training_data/genome_features/ \ 
+    --downloaded-traits ./data/training_data/bacdive_data.json \ 
+    --tsv-output ./data/training_data/training_data.tsv
 ```
 
 

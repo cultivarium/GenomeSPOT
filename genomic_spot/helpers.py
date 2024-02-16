@@ -3,7 +3,7 @@
 import json
 from collections import Counter
 from itertools import groupby
-from re import L
+from pathlib import Path
 from typing import (
     IO,
     Dict,
@@ -46,6 +46,37 @@ def iterate_fasta(fasta_file: IO):
         headerStr = header.__next__()[1:].strip()
         seq = "".join(s.strip() for s in faiter.__next__())
         yield (headerStr, seq)
+
+
+def load_file_pairs_from_directory(directory, suffix_fna, suffix_faa) -> Tuple[list, int]:
+    """Loads file pairs from directory and returns list of tuples and number of missing files
+
+    Args:
+        directory (str): directory containing genome files
+        suffix_fna (str): suffix of DNA FASTA files
+        suffix_faa (str): suffix of protein FASTA files
+    Returns:
+        list: list of tuples of (genome_accession, faa_path, fna_path)
+        int: number of missing files
+    """
+    pathlist = []
+    fna_paths = genome_accession_to_filepath_from_suffix(suffix_fna, directory)
+    faa_paths = genome_accession_to_filepath_from_suffix(suffix_faa, directory)
+    for genome_accession in fna_paths.keys() & faa_paths.keys():
+        fna_path = fna_paths[genome_accession]
+        faa_path = faa_paths[genome_accession]
+        pathlist.append((genome_accession, faa_path, fna_path))
+    n_missing_files = len(fna_paths.keys() | faa_paths.keys()) - len(fna_paths.keys() & faa_paths.keys())
+    return pathlist, n_missing_files
+
+
+def genome_accession_to_filepath_from_suffix(suffix, directory):
+    """Obtains ACCESSION from file path such as `path/to/ACCESSION.blah.blah.blah.`"""
+    accession_to_filepath = {}
+    for path in Path(directory).rglob("*{}".format(suffix)):
+        accession = str(path).split("/")[-1].split(".")[0]
+        accession_to_filepath[accession] = path
+    return accession_to_filepath
 
 
 def rename_condition_to_variable(condition, attribute="optimum"):

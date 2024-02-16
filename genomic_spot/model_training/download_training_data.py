@@ -539,7 +539,6 @@ class ComputeBacDiveTraits:
 
 
 def get_bacdive_trait_data(
-    output: str,
     bacdive_output: str,
     bacdive_username: str,
     bacdive_password: str,
@@ -581,17 +580,13 @@ def get_bacdive_trait_data(
         genome_accession = strain_traits.get("ncbi_accession", None)
         if genome_accession:
             trait_dict[genome_accession] = strain_traits
-    # json.dump(trait_dict, open(output, "w"))
-    # Save trait data as a pandas dataframe
-    df_targets = pd.DataFrame(trait_dict).T
-    df_targets.to_csv(output, sep=',')
 
     # Save genome list
     with open("genbank_accessions.txt", "w") as fh:
         accessions = trait_dict.keys()
         fh.write("\n".join(accessions))
 
-    return df_targets
+    return trait_dict
 
 
 def parse_args():
@@ -630,7 +625,6 @@ if __name__ == "__main__":
 
     args = parse_args()
     df_targets = get_bacdive_trait_data(
-        output=args.output,
         bacdive_output=args.save_bacdive_download,
         bacdive_username=args.username,
         bacdive_password=args.password,

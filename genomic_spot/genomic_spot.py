@@ -243,7 +243,7 @@ def predict_physicochemistry(
 def save_results(predictions: dict, genome_features: dict, output_prefix: str, save_genome_features: bool):
     if output_prefix is not None and save_genome_features is True:
         intermediate_output = str(output_prefix) + ".features.json"
-        logging.info("Saving intermediate to %s", intermediate_output)
+        logging.info("Saving genome features to %s", intermediate_output)
         json.dump(genome_features, open(intermediate_output, "w", encoding="utf-8"))
         return genome_features
     if output_prefix is not None and predictions is not None:

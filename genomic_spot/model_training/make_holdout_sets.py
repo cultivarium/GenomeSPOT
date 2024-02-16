@@ -27,11 +27,10 @@ from ..helpers import (
     load_train_and_test_sets,
     load_training_data,
 )
-from .taxonomy import (
-    BalanceTaxa,
-    PartitionTaxa,
-    TaxonomyGTDB,
-)
+from .balance import BalanceTaxa
+from .download_training_data import ComputeBacDiveTraits
+from .partition import PartitionTaxa
+from .taxonomy import TaxonomyGTDB
 
 
 logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)s %(message)s")

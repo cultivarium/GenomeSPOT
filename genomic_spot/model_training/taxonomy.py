@@ -1,10 +1,4 @@
-"""
-Classes to perform operations on a taxonomic basis:
-
-    - TaxonomyGTDB: taxonomy helper
-    - BalanceTaxa: balances a dataset using taxonomy
-    - PartitionTaxa: partitions a dataset using taxonomy
-"""
+"""TaxonomyGTDB is a helper class to use the Genome Taxonomy Database (GTDB) taxonomy."""
 
 import gzip
 import io

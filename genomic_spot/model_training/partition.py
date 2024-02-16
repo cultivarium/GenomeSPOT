@@ -1,3 +1,5 @@
+"""PartitionTax partitions a dataset using taxonomy"""
+
 from collections import defaultdict
 
 import numpy as np

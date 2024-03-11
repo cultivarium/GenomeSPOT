@@ -27,7 +27,6 @@ class PartitionTaxa:
         partitioner = PartitionTaxa(
             taxonomy=taxonomy,
             partition_rank='family',
-            iteration_rank='phylum',
             diversity_rank='genus',
         )
         partitioned_genomes = partitioner.partition(balanced_genomes, partition_size=0.2)
@@ -36,8 +35,6 @@ class PartitionTaxa:
         ```
     Args:
         partition_rank: taxonomic rank at which to separate taxa into partitions, e.g. "family",
-        iteration_rank: taxonomic rank at which to iteratively sample over, to make sure
-            partitions are sourced from diverse taxa, e.g. phyla
         diversity_rank: taxonomic rank at which to compute diversity, e.g. "genus"
     """
 

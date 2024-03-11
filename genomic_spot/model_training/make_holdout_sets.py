@@ -1,7 +1,6 @@
 """Functions for making holdout sets for model training and evaluation
 
-- As a script, runs one set of functions to generate test/train holdout sets.
-- As a module, also contains functions for generating cross-validation sets.
+As a script, runs one set of functions to generate test/train holdout sets and cross-validation sets.
 
 For holdout sets, the test and train sets are saved as lists of genome accessions.
 
@@ -28,7 +27,6 @@ from ..helpers import (
     load_training_data,
 )
 from .balance import BalanceTaxa
-from .download_training_data import ComputeBacDiveTraits
 from .partition import PartitionTaxa
 from .taxonomy import TaxonomyGTDB
 

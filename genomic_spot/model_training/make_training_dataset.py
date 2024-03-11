@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import multiprocessing
 from glob import glob
@@ -12,14 +11,11 @@ from typing import (
 
 import pandas as pd
 
-from ..bioinformatics.genome import Genome
 from ..genomic_spot import (
     measure_genome_features,
-    predict_physicochemistry,
     save_results,
 )
 from ..helpers import load_file_pairs_from_directory
-from .download_training_data import ComputeBacDiveTraits
 from .taxonomy import TaxonomyGTDB
 
 
@@ -40,7 +36,6 @@ IGNORE_GENOMES = [
     "GCA_905142475",  # bug? proteins double counted
     "GCA_905220785",  # bug? proteins double counted
 ]
-BACDIVE_DATA_FILE = "./data/bacdive/bacdive_download.json"
 
 
 ### FUNCTIONS TO MEASURE GENOME FEATURES IN PARALLEL
@@ -230,7 +225,22 @@ def make_training_dataset(
     output_tsv: str,
     processes: Union[int, None] = None,
     skip_measure_features: bool = False,
-):
+) -> pd.DataFrame:
+    """Make a training dataset by measuring genome features and joining
+    that data with downloaded trait data
+
+    Args:
+        downloaded_traits (str): path to the trait data TSV downloaded from BacDive using download_training_data.py
+        genomes_dir (str): path to directory containing subdirectories each with one genome FASTA and one protein FASTA
+        suffix_fna (str): suffix of genome FASTA files, default .fna.gz
+        suffix_faa (str): suffix of protein FASTA files, default .faa.gz
+        output_features_dir (str): directory to save with genome feature files <genome_accession>.features.json
+        output_tsv (str): path to write the training data TSV file
+        processes (int): number of parallel processes (default=4)
+        skip_measure_features (bool): whether to skip measuring genome features (recommended if already computed)
+    Returns:
+        df (pd.DataFrame): dataframe with features and targets
+    """
     # Measure genome features in parallel
     if skip_measure_features is False:
         pool_measure_genome_features(genomes_dir, suffix_fna, suffix_faa, output_features_dir, processes)
@@ -238,6 +248,7 @@ def make_training_dataset(
     # Join features with downloaded trait data
     df = make_training_df(output_features_dir, downloaded_traits)
     df.to_csv(output_tsv, sep="\t")
+    return df
 
 
 def parse_args():
@@ -289,8 +300,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    # FEATURES_DIRECTORY = "./data/bacdive/genome_features/"
-    # BACDIVE_DATA_FILE = "./data/bacdive/bacdive_download.json"
     make_training_dataset(
         downloaded_traits=args.downloaded_traits,
         genomes_dir=args.genomes_directory,

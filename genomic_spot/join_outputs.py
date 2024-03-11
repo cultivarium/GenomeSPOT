@@ -1,3 +1,5 @@
+"""Simple helper to join outputs of individual genome predictions into a single TSV and/or JSON."""
+
 import argparse
 import json
 from glob import glob

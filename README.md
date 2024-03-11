@@ -30,9 +30,9 @@ Recommended:
 Runtime: ~5-10 seconds per genome
 
 ```shell
-python -m genomic_spot.genomic_spot --models models \
-    --contigs tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz \
-    --proteins tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz \
+python -m genomic_spot.genomic_spot --models models \ 
+    --contigs tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz \ 
+    --proteins tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz \ 
     --output GCA_000172155.1
 ```
 Hint: if you only have a genome and need a protein FASTA, use prodigal. 
@@ -42,31 +42,6 @@ gunzip genome.fna.gz # requires unzip
 prodigal -i genome.fna -a protein.faa # get proteins
 gzip genome.fna
 ```
-
-### Parallelization
-
-A simple option is to use a shell function pwait to perform x processes at once ([reference](https://stackoverflow.com/questions/38160/parallelize-bash-script-with-maximum-number-of-processes/880864#880864)). The below example runs 10 jobs at once.
-
-```shell
-# Define pwait
-function pwait() {
-    while [ $(jobs -p | wc -l) -ge $1 ]; do
-        sleep 1
-    done
-}
-
-# Run in parallel
-INDIR='data/features-v4'
-OUTDIR='data/predictions'
-for FEATURES_JSON in `ls $INDIR`; 
-do
-PREFIX=$(echo $FEATURES_JSON | cut -d. -f1);
-echo $FEATURES_JSON $PREFIX;
-python -m genomic_spot.genomic_spot --models models --genome-features $INDIR/$FEATURES_JSON --output $OUTDIR/$PREFIX > temp.txt &;
-pwait 10
-done
-```
-
 
 ## 3. Interpret output
 
@@ -92,7 +67,6 @@ salinity_min                 0  1.393914    False  min_exceeded      % w/v NaCl
 oxygen                0.954284      None    False          None  prob. tolerant
 ```
 
-
 # Tutorial
 
 `tutorial.ipynb` provides an interactive demonstration of modules in this repo. Briefly:
@@ -108,6 +82,31 @@ oxygen                0.954284      None    False          None  prob. tolerant
 - The warning is most likely to occur when the organism is very different than organisms in the training dataset and/or was predicted to have few or no extracellular proteins, which are used in predicting salinity and pH. Please also note that extremophiles have atypical amino acid distributions that make predictions slightly less accurate. For example, oxygen tolerance predictions are slightly less accurate at higher temperature.
 - A flag enables saving the intermediate output, which can be use to understand errors or to repeat model training.
 
+# Parallelization
+
+## Shell
+
+A simple option is to use a shell function pwait to perform x processes at once ([reference](https://stackoverflow.com/questions/38160/parallelize-bash-script-with-maximum-number-of-processes/880864#880864)). The below example runs 10 jobs at once.
+
+```shell
+# Define pwait
+function pwait() {
+    while [ $(jobs -p | wc -l) -ge $1 ]; do
+        sleep 1
+    done
+}
+
+# Run in parallel
+INDIR='data/features-v4'
+OUTDIR='data/predictions'
+for FEATURES_JSON in `ls $INDIR`; 
+do
+PREFIX=$(echo $FEATURES_JSON | cut -d. -f1);
+echo $FEATURES_JSON $PREFIX;
+python -m genomic_spot.genomic_spot --models models --genome-features $INDIR/$FEATURES_JSON --output $OUTDIR/$PREFIX > temp.txt &;
+pwait 10
+done
+```
 
 # Model training and evaluation
 
@@ -181,7 +180,7 @@ Command line:
 python3 -m genomic_spot.model_training.make_holdout_sets --training_data_filename  data/training_data/training_data_20231203.tsv --path_to_holdouts
 ```
 
-## 4. Train models and select best model with cross-validation
+## 4. Train a variety of models and select the best model
 
 Generate train / test holdouts:
 ```shell
@@ -193,7 +192,10 @@ Optional: run various sets of features and models to find the best.
 python3 -m genomic_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/
 ```
 
-## 5. Produce final model on all data
+## 5. Produce the final model using all available data
+
+
+
 
 ```shell
 python3 -m genomic_spot.model_training.train_models --training_data_filename data/training_data/training_data_20231203.tsv --path_to_models models

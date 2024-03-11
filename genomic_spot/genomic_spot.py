@@ -27,7 +27,24 @@ PREDICTION_BOUNDS = {
     "oxygen": (0, 1),
 }
 
-UNITS = {"temperature": "C", "ph": "pH", "salinity": "% w/v NaCl", "oxygen": "prob. tolerant"}
+UNITS = {"temperature": "C", "ph": "pH", "salinity": "% w/v NaCl", "oxygen": "probability"}
+
+
+def reformat_oxygen_prediction(y_pred_prob: float) -> Tuple[str, float]:
+    """Reformat oxygen prediction to be more human-readable.
+    Classifies as tolerant or intolerant and provides
+    the probability of the prediction as the 'error' value.
+
+    Args:
+        y_pred_prob: probability of being tolerant
+    """
+    if y_pred_prob > 0.5:
+        y_pred = "tolerant"
+        error = y_pred_prob
+    else:
+        y_pred = "not intolerant"
+        error = 1 - y_pred_prob
+    return y_pred, error
 
 
 def predict_from_genome(genome_features: dict, path_to_models: str) -> Dict[str, dict]:
@@ -142,9 +159,8 @@ def predict_target_value(
         if error_model is not None:
             error = predict_error(y_pred, error_model)
     elif method == "predict_proba":
-        y_pred = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
-        # y_pred = "tolerant" if y_pred_prob > 0.5 else "intolerant"
-        # probability = y_pred_prob if y_pred_prob > 0.5 else 1 - y_pred_prob
+        y_pred_prob = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
+        y_pred, error = reformat_oxygen_prediction(y_pred_prob)
 
     if novelty_model is not None:
         novelty = predict_novelty(X, novelty_model)

@@ -538,12 +538,36 @@ class ComputeBacDiveTraits:
         return features
 
 
+def load_targets_to_dataframe(bacdive_download_file: str) -> pd.DataFrame:
+    """Use ComputeBacDiveTraits to create a dataframe
+    calculated from the downloaded BacDive data.
+
+    Args:
+        bacdive_download_file (str): path to BacDive data downloaded using
+            the script download_training_data.py
+
+    Returns:
+        df_targets (pd.DataFrame): dataframe with trait data
+    """
+    bacdive_dict = json.loads(open(bacdive_download_file, "r").read())
+    trait_dict = {}
+    for data in bacdive_dict.values():
+        strain_traits = ComputeBacDiveTraits(data).compute_trait_data()
+        genome_accession = strain_traits.get("ncbi_accession", None)
+        if genome_accession:
+            trait_dict[genome_accession] = strain_traits
+    traits_df = pd.DataFrame(trait_dict).T
+    return traits_df
+
+
 def get_bacdive_trait_data(
     bacdive_output: str,
     bacdive_username: str,
     bacdive_password: str,
     max_bacdive_id: int,
     min_bacdive_id: int = 0,
+    traits_tsv: str = "trait_data.tsv",
+    genome_accessions_txt: str = "genbank_accessions.txt",
     bacdive_json: dict = None,
 ):
     """Main function to download and engineer data from BacDive.
@@ -574,19 +598,15 @@ def get_bacdive_trait_data(
         bacdive_dict = json.loads(open(bacdive_json, "r").read())
 
     # Compute trait data indexed by genome
-    trait_dict = {}
-    for n, (strain_id, data) in enumerate(bacdive_dict.items()):
-        strain_traits = ComputeBacDiveTraits(data).compute_trait_data()
-        genome_accession = strain_traits.get("ncbi_accession", None)
-        if genome_accession:
-            trait_dict[genome_accession] = strain_traits
+    traits_df = load_targets_to_dataframe(bacdive_output)
+    traits_df.to_csv(traits_tsv, sep="\t")
 
     # Save genome list
-    with open("genbank_accessions.txt", "w") as fh:
-        accessions = trait_dict.keys()
+    with open(genome_accessions_txt, "w") as fh:
+        accessions = traits_df.index.tolist()
         fh.write("\n".join(accessions))
 
-    return trait_dict
+    return traits_df
 
 
 def parse_args():
@@ -614,8 +634,10 @@ def parse_args():
         required=False,
     )
     parser.add_argument("-e", "--existing", default=None, help="Existing  BacDive data download")
-    parser.add_argument("-o", "--output", default="trait_data.json", help="Output JSON name")
-
+    parser.add_argument("-o", "--output", default="trait_data.tsv", help="Output TSV of trait data")
+    parser.add_argument(
+        "-a", "--accessions", default="genbank_accessions.txt", help="Output TXT file with genome accessions"
+    )
     args = parser.parse_args()
     return args
 
@@ -626,6 +648,8 @@ if __name__ == "__main__":
     args = parse_args()
     df_targets = get_bacdive_trait_data(
         bacdive_output=args.save_bacdive_download,
+        traits_tsv=args.output,
+        genome_accessions_txt=args.accessions,
         bacdive_username=args.username,
         bacdive_password=args.password,
         max_bacdive_id=int(args.max),

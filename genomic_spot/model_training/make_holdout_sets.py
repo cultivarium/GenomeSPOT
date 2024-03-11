@@ -78,7 +78,6 @@ def make_holdout_sets(
     partitioner = PartitionTaxa(
         taxonomy=taxonomy,
         partition_rank="family",
-        iteration_rank="phylum",
         diversity_rank="genus",
     )
 
@@ -450,12 +449,14 @@ def parse_args():
     )
     parser.add_argument(
         "--overwrite",
-        type=bool,
-        required=True,
-        default=True,
+        action="store_true",
         help="If True, saves file, overwriting any existing holdout sets. If False, does not write to files.",
     )
+
     args = parser.parse_args()
+
+    if args.overwrite is None:
+        args.overwrite = False
     return args
 
 

@@ -149,25 +149,16 @@ def load_features_json_to_df(filename: str) -> pd.DataFrame:
     return df_genome
 
 
-def load_targets_to_dataframe(bacdive_download_file: str) -> pd.DataFrame:
-    """Use ComputeBacDiveTraits to create a dataframe
-    calculated from the downloaded BacDive data.
+def load_target_dataframe(trait_data_tsv: str) -> pd.DataFrame:
+    """Load trait data from a TSV file to a dataframe
 
     Args:
-        bacdive_download_file (str): path to BacDive data downloaded using
-            the script download_training_data.py
+        trait_data_tsv (str): path to data computed by ComputeBacDiveTraits
 
     Returns:
         df_targets (pd.DataFrame): dataframe with trait data
     """
-    bacdive_dict = json.loads(open(bacdive_download_file, "r").read())
-    trait_dict = {}
-    for data in bacdive_dict.values():
-        strain_traits = ComputeBacDiveTraits(data).compute_trait_data()
-        genome_accession = strain_traits.get("ncbi_accession", None)
-        if genome_accession:
-            trait_dict[genome_accession] = strain_traits
-    df_targets = pd.DataFrame(trait_dict).T
+    df_targets = pd.read_csv(trait_data_tsv, sep="\t", index_col=0)
     return df_targets
 
 
@@ -186,6 +177,7 @@ def qc_features_dataframe(
     genomes_to_drop = df_features[below_coding_density_filter | above_coding_density_filter].index.tolist()
     if use_preset_to_ignore_genomes:
         genomes_to_drop += IGNORE_GENOMES
+    genomes_to_drop = list(set(genomes_to_drop).intersection(df_features.index))
     logging.info("Ignoring genomes: %s", ", ".join(genomes_to_drop))
     return df_features.drop(genomes_to_drop)
 
@@ -211,19 +203,19 @@ def qc_targets_dataframe(input_df_targets: pd.DataFrame) -> pd.DataFrame:
     return df_targets
 
 
-def make_training_df(features_dir: str, bacdive_download_file: str) -> pd.DataFrame:
+def make_training_df(features_dir: str, trait_data_tsv: str) -> pd.DataFrame:
     """Load features JSONs and target data to create a training dataframe
 
     Args:
         features_dir (str): directory containing genome features
-        bacdive_download_file (str): path to BacDive data downloaded using
+        trait_data_tsv (str): path to trait data produced using
             the script download_training_data.py
     Returns:
         df (pd.DataFrame): dataframe with features and targets ready for training
     """
     df_features = load_features_to_dataframe(features_dir)
     df_features = qc_features_dataframe(df_features)
-    df_targets = load_targets_to_dataframe(bacdive_download_file)
+    df_targets = load_target_dataframe(trait_data_tsv=trait_data_tsv)
     df_targets = qc_targets_dataframe(df_targets)
     df = df_features.join(df_targets, how="inner")
     return df
@@ -270,7 +262,7 @@ def parse_args():
         "--downloaded-traits",
         type=str,
         required=True,
-        help="Path to the downloaded BacDive traits JSON file",
+        help="Path to the trait data TSV downloaded from BacDive using download_training_data.py",
     )
 
     parser.add_argument(

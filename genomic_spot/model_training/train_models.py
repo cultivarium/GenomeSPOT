@@ -322,9 +322,12 @@ def train_models_for_each_condition(
         keep_below=keep_below,
         keep_above=keep_above,
     )
+
     training_df = condition_df.loc[list(balanced_genomes)]
     logging.info("%s data available for %s genomes after balancing", condition, len(training_df))
-
+    with open(f"{path_to_models}/genomes_{condition}.txt", "w") as fh:
+        for genome in balanced_genomes:
+            fh.write(f"{genome}\n")
     if condition in ["temperature", "ph", "salinity"]:
         for attr in ["optimum", "min", "max"]:
             logging.info("Training model for %s", target)

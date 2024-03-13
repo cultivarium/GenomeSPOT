@@ -434,9 +434,12 @@ def parse_args():
         required=True,
         help="Path to directory to save holdout sets",
     )
-    parser.add_argument("-o", "--outdir", help="Output directory")
+    parser.add_argument("-o", "--outdir", required=True, help="Output directory")
 
     args = parser.parse_args()
+
+    if str(args.outdir).endswith("/"):
+        args.outdir = args.outdir[:-1]
     return args
 
 

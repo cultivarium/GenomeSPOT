@@ -10,7 +10,7 @@ from src._version import __version__
 setup(
     name="genome_spot",
     version=__version__,
-    description="Estimate oxygen, temp, salinity, and pH preferences of bacteria and archaea from a genome",
+    description="Predict oxygen, temp, salinity, and pH preferences of bacteria and archaea from a genome",
     url="https://github.com/cultivarium/GenomeSPOT",
     author="Tyler Barnum",
     author_email="tyler@cultivarium.org",

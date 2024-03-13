@@ -37,7 +37,7 @@ CONDITIONS = ["oxygen", "salinity", "ph", "temperature"]
 
 THRESHOLDS_TO_KEEP = {
     "oxygen": (-9999, 9999),  # i.e. no thresholds
-    "salinity": (0, 14),  # i.e. no lower threshold
+    "salinity": (-1, 14),  # i.e. no lower threshold
     "temperature": (19, 45),
     "ph": (4, 9),
 }

@@ -8,7 +8,9 @@ from typing import Tuple
 import joblib
 import numpy as np
 import pandas as pd
+from genome_spot.model_training import balance
 from sklearn.metrics import (
+    balanced_accuracy_score,
     confusion_matrix,
     f1_score,
     mean_squared_error,
@@ -19,6 +21,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import OneClassSVM
 
 from ..helpers import (
+    load_train_and_test_sets,
     load_training_data,
     rename_condition_to_variable,
 )
@@ -284,7 +287,12 @@ def save_data(target: str, features: list, genome_accessions: list, path_to_mode
 
 
 def train_models_for_each_condition(
-    condition: str, df: pd.DataFrame, instructions: dict, balancer: BalanceTaxa, path_to_models: str
+    condition: str,
+    df: pd.DataFrame,
+    instructions: dict,
+    balancer: BalanceTaxa,
+    path_to_models: str,
+    path_to_holdouts: str,
 ):
     """Trains models for each condition
 
@@ -301,6 +309,7 @@ def train_models_for_each_condition(
         instructions (dict): dictionary with instructions for each model
         balancer (BalanceTaxa): object to balance data
         path_to_models (str): path to models directory
+        path_to_holdouts (str): path to directory with train and test sets for each condition
     Returns:
         None
     """
@@ -311,23 +320,11 @@ def train_models_for_each_condition(
     condition_df = df[df[f"use_{condition}"] == True]
     logging.info("%s data available for %s genomes", condition, len(condition_df))
 
-    balance_proportion = BALANCE_PROPORTIONS[condition]
-    keep_below, keep_above = THRESHOLDS_TO_KEEP[condition]
-    balanced_genomes = balance_but_keep_extremes(
-        df_data=condition_df,
-        target=target,
-        genomes_for_use=condition_df.index.drop_duplicates().tolist(),
-        balancer=balancer,
-        balance_proportion=balance_proportion,
-        keep_below=keep_below,
-        keep_above=keep_above,
-    )
-
+    train_set, test_set = load_train_and_test_sets(condition, path_to_holdouts)
+    balanced_genomes = list(set(train_set).union(test_set))
     training_df = condition_df.loc[list(balanced_genomes)]
-    logging.info("%s data available for %s genomes after balancing", condition, len(training_df))
-    with open(f"{path_to_models}/genomes_{condition}.txt", "w") as fh:
-        for genome in balanced_genomes:
-            fh.write(f"{genome}\n")
+    logging.info("%s data available for %s genomes in train and test sets", condition, len(training_df))
+
     if condition in ["temperature", "ph", "salinity"]:
         for attr in ["optimum", "min", "max"]:
             logging.info("Training model for %s", target)
@@ -360,12 +357,14 @@ def train_models_for_each_condition(
 def train_models(
     training_data_filename: str,
     path_to_models: str,
+    path_to_holdouts: str,
 ):
     """Main function to train and save models for each condition
 
     Args:
         training_data_filename (str): path to training data
         path_to_models (str): path to models directory
+        path_to_holdouts (str): path to directory with train and test sets for each condition
     Returns:
         None
     """
@@ -375,7 +374,9 @@ def train_models(
     instructions = load_instructions(f"{path_to_models}/instructions.json")
     logging.info("Training models for conditions: %s", ", ".join(instructions.keys()))
     for condition in instructions.keys():
-        train_models_for_each_condition(condition, df, instructions, balancer, path_to_models=path_to_models)
+        train_models_for_each_condition(
+            condition, df, instructions, balancer, path_to_models=path_to_models, path_to_holdouts=path_to_holdouts
+        )
 
 
 def parse_args():
@@ -395,6 +396,12 @@ def parse_args():
         required=True,
         help="Path to directory to save models, containing instructions.json",
     )
+    parser.add_argument(
+        "--path_to_holdouts",
+        type=str,
+        required=True,
+        help="Path to directory with train and test sets for each condition",
+    )
     args = parser.parse_args()
     return args
 
@@ -404,4 +411,5 @@ if __name__ == "__main__":
     train_models(
         training_data_filename=args.training_data_filename,
         path_to_models=args.path_to_models,
+        path_to_holdouts=args.path_to_holdouts,
     )

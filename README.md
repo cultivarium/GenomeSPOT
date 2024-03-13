@@ -134,7 +134,7 @@ Data is downloaded from two resources:
 - BacDive API (**instructions for credentials here**: https://api.bacdive.dsmz.de/)
 - Genome Taxonomy Database (info: https://gtdb.ecogenomic.org/)
 
-NOTE: takes several hours.
+Runtime: under a day.
 
 ```shell
 # Create directory structure
@@ -148,7 +148,7 @@ vi .bacdive_credentials # username on line 1, password on line 2
 MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
 python3 -m genome_spot.model_training.download_training_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
     --max $MAX_BACDIVE_ID \
-    -s data/training_data/bacdive_data.json \
+    -b data/training_data/bacdive_data.json \
     -o data/training_data/trait_data.tsv \
     -a genbank_accessions.txt
 
@@ -168,7 +168,7 @@ gunzip data/references/*tsg.gz
 
 Measure features from genomes and join them with the target variables to be predicted - i.e. trait data from BacDive - to create the training dataset.
 
-NOTE: takes several hours for ~10-20k genomes.
+Runtime: under a day for ~10-20k genomes.
 
 ```shell
 python3 -m genome_spot.model_training.make_training_dataset -p 7 \
@@ -190,21 +190,21 @@ The function `make_holdout_sets` performs phylogenetic balancing and partitionin
 1. Genomes are balanced and partitioned at the family level into **training and test sets** for each condition being predicted. Genome accessions are recorded in files like `<path_to_holdouts>/train_set_<condition>.txt`
 2. Genomes in the training set are further divided for **cross-validation**. In each fold of a cross-validation, a different set of genomes are held out of model training and used to score the model. The default script performs 5-fold cross-validation, for each rank in phylum, class, order, family, genus, and species. Genome accessions are stored in `<path_to_holdouts>/<condition>_cv_sets.json`, keyed by rank and in list of tuples of `(training_indices, validation_indices)`.
 
-Command line:
+Runtime: 1-2 minutes.
 
 ```shell
 # Create train, test, and cross-validation sets
-python3 -m genome_spot.model_training.make_holdout_sets --training_data_filename  data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts/ --overwrite
+python3 -m genome_spot.model_training.make_holdout_sets --training_data_filename  data/training_data/training_data.tsv --path_to_holdouts data/holdouts/ --overwrite
 ```
 
 ## 4. Train a variety of models and select the best model
 
 In the preprint, we describe testing different sets of features (e.g. only amino acid frequencies) with different types of models (e.g. [least squares, ridge, and lasso linear regressions](https://scikit-learn.org/stable/modules/linear_model.html)). To reproduce that workflow, you can run the script `run_model_selection.py`. The sets of features and estimators are hard-coded into the script `run_model_selection`, so you will be unable to try new sets of features or models without modifying code.
 
-NOTE: takes several hours.
+Runtime: ~10 minutes.
 
 ```shell
-python3 -m genome_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/
+python3 -m genome_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/
 ```
 
 The script saves models and statistics to the output directory. The statistics can be assessed and used to select a model using the notebook `evaluate_models.ipynb`

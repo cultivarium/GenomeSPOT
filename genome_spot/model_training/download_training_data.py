@@ -25,7 +25,7 @@ import pandas as pd
 
 FREQUENT_OPTIMUM_PH = [6.0, 6.5, 6.75, 7.0, 7.25, 7.5, 7.75, 8.0, 8.5, 9.0]
 FREQUENT_OPTIMUM_TEMP = [20.0, 25.0, 26.0, 26.5, 27.5, 28.0, 29.0, 30.0, 31.0, 32.5, 33.5, 35.0, 36.0, 37.0, 40.0]
-FREQUENT_OPTIMUM_SALINITY = [0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.5, 10.0]
+FREQUENT_OPTIMUM_SALINITY = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.5, 10.0]
 
 
 class QueryBacDive:
@@ -464,7 +464,7 @@ class ComputeBacDiveTraits:
                 self.salinity_max,
                 n_values_reported=len(self.reported_salinities),
                 required_range=0.5,
-                keep_below=-1,
+                keep_below=0,  # required to keep 0% salinity values
                 keep_above=15,
                 optima_to_check=FREQUENT_OPTIMUM_SALINITY,
             ),
@@ -568,7 +568,7 @@ def get_bacdive_trait_data(
     min_bacdive_id: int = 0,
     traits_tsv: str = "trait_data.tsv",
     genome_accessions_txt: str = "genbank_accessions.txt",
-    bacdive_json: dict = None,
+    use_existing: bool = False,
 ):
     """Main function to download and engineer data from BacDive.
 
@@ -583,7 +583,7 @@ def get_bacdive_trait_data(
         bacdive_json: (Optional) A preexisting download from BacDive
     """
     # Query BacDive
-    if bacdive_json is None:
+    if use_existing is not True:
         logging.info("Attempting to download data from BacDive API")
         bacdive_dict = QueryBacDive(
             username=bacdive_username,
@@ -595,7 +595,7 @@ def get_bacdive_trait_data(
         json.dump(bacdive_dict, open(bacdive_output, "w"))
     else:
         logging.info("Data from BacDive API supplied by user")
-        bacdive_dict = json.loads(open(bacdive_json, "r").read())
+        bacdive_dict = json.loads(open(bacdive_output, "r").read())
 
     # Compute trait data indexed by genome
     traits_df = load_targets_to_dataframe(bacdive_output)
@@ -627,18 +627,21 @@ def parse_args():
     parser.add_argument("--min", default=0, help="Lowest BacDive ID to query", required=False)
     parser.add_argument("--max", help="Highest BacDive ID to query")
     parser.add_argument(
-        "-s",
-        "--save-bacdive-download",
+        "-b",
+        "--bacdive-download",
         default="bacdive_data.json",
         help="Optional: filepath to save raw BacDive data as JSON",
         required=False,
     )
-    parser.add_argument("-e", "--existing", default=None, help="Existing  BacDive data download")
+    parser.add_argument("--use-existing", action="store_true", help="Existing  BacDive data download")
     parser.add_argument("-o", "--output", default="trait_data.tsv", help="Output TSV of trait data")
     parser.add_argument(
         "-a", "--accessions", default="genbank_accessions.txt", help="Output TXT file with genome accessions"
     )
     args = parser.parse_args()
+    if args.use_existing:
+        if not args.bacdive_download:
+            raise ValueError("If using existing BacDive data, a filepath must be provided")
     return args
 
 
@@ -647,12 +650,12 @@ if __name__ == "__main__":
 
     args = parse_args()
     df_targets = get_bacdive_trait_data(
-        bacdive_output=args.save_bacdive_download,
+        bacdive_output=args.bacdive_download,
         traits_tsv=args.output,
         genome_accessions_txt=args.accessions,
         bacdive_username=args.username,
         bacdive_password=args.password,
         max_bacdive_id=int(args.max),
         min_bacdive_id=int(args.min),
-        bacdive_json=args.existing,
+        use_existing=args.use_existing,
     )

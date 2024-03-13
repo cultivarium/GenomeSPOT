@@ -8,16 +8,16 @@ from src._version import __version__
 
 
 setup(
-    name="genome_opts",
+    name="genome_spot",
     version=__version__,
-    description="Estimate oxygen, pH, temp, and salinity preferences from genomes",
-    url="https://github.com/cultivarium/Genome-OPTS",
+    description="Estimate oxygen, temp, salinity, and pH preferences of bacteria and archaea from a genome",
+    url="https://github.com/cultivarium/GenomeSPOT",
     author="Tyler Barnum",
     author_email="tyler@cultivarium.org",
     license="MIT License",
-    package_data={"genome_opts": []},
+    package_data={"genome_spot": []},
     packages=find_packages(exclude=["tests"]),
-    scripts=["genomic_spot/"],
+    scripts=["genome_spot/"],
     python_requires=">=3.8.16",
     install_requires=[
         "biopython>=1.81",

@@ -11,7 +11,7 @@ from typing import (
 
 import pandas as pd
 
-from ..genomic_spot import (
+from ..genome_spot import (
     measure_genome_features,
     save_results,
 )

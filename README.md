@@ -1,4 +1,4 @@
-# Genomic-SPOT: prediction of optimum growth conditions from a genome
+# GenomeSPOT: prediction of optimum growth conditions from a genome
 
 Predicts oxygen tolerance (obligate/facultative aerobe vs. obligate anaerobe) and optimum, min, and max temperature (C), salinity (% w/v NaCl), and pH preferences from bacterial and archaeal genomes using models trained on diverse, phylogenetically balanced sets of isolates.
 
@@ -30,7 +30,7 @@ Recommended:
 Runtime: ~5-10 seconds per genome
 
 ```shell
-python -m genomic_spot.genomic_spot --models models \
+python -m genome_spot.genome_spot --models models \
     --contigs tests/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz \
     --proteins tests/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz \
     --output GCA_000172155.1
@@ -96,7 +96,7 @@ Our models were built using phylogenetic balancing and partitioning to improve a
 If you have made predictions for many genomes and want results in a single table, a helper script is provided to join predictions for multiple genomes into a single TSV (`all.predictions.tsv`). The first and second rows of the table indicate. respectively, the growth condition being predicted (e.g. `temperature_optimum`) and the type of data in the column (e.g. `error`). All other rows contain data per genome.
 
 ```python
-python3 -m genomic_spot.join_outputs --dir data/predictions --write-to-tsv
+python3 -m genome_spot.join_outputs --dir data/predictions --write-to-tsv
 ```
 
 If you have tens of thousands of genomes and no convenient resources for parallelizing computing tasks, a simple option is to use a shell command `pwait x` to perform x processes at once ([reference](https://stackoverflow.com/questions/38160/parallelize-bash-script-with-maximum-number-of-processes/880864#880864)). The below example runs 10 jobs at once.
@@ -116,7 +116,7 @@ for FEATURES_JSON in `ls $INDIR`;
 do
 PREFIX=$(echo $FEATURES_JSON | cut -d. -f1);
 echo $FEATURES_JSON $PREFIX;
-python -m genomic_spot.genomic_spot --models models --genome-features $INDIR/$FEATURES_JSON --output $OUTDIR/$PREFIX > temp.txt &;
+python -m genome_spot.genome_spot --models models --genome-features $INDIR/$FEATURES_JSON --output $OUTDIR/$PREFIX > temp.txt &;
 pwait 10
 done
 ```
@@ -146,7 +146,7 @@ mkdir data/references
 # Download BacDive data
 vi .bacdive_credentials # username on line 1, password on line 2
 MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
-python3 -m genomic_spot.model_training.download_training_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
+python3 -m genome_spot.model_training.download_training_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
     --max $MAX_BACDIVE_ID \
     -s data/training_data/bacdive_data.json \
     -o data/training_data/trait_data.tsv \
@@ -171,7 +171,7 @@ Measure features from genomes and join them with the target variables to be pred
 NOTE: takes several hours for ~10-20k genomes.
 
 ```shell
-python3 -m genomic_spot.model_training.make_training_dataset -p 7 \
+python3 -m genome_spot.model_training.make_training_dataset -p 7 \
     --genomes-directory ./data/genomes/ \
     -sfna .fna.gz -sfaa .faa.gz \
     --features-directory ./data/training_data/genome_features/ \
@@ -194,7 +194,7 @@ Command line:
 
 ```shell
 # Create train, test, and cross-validation sets
-python3 -m genomic_spot.model_training.make_holdout_sets --training_data_filename  data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts/ --overwrite
+python3 -m genome_spot.model_training.make_holdout_sets --training_data_filename  data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts/ --overwrite
 ```
 
 ## 4. Train a variety of models and select the best model
@@ -204,7 +204,7 @@ In the preprint, we describe testing different sets of features (e.g. only amino
 NOTE: takes several hours.
 
 ```shell
-python3 -m genomic_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/
+python3 -m genome_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data_20231203.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/
 ```
 
 The script saves models and statistics to the output directory. The statistics can be assessed and used to select a model using the notebook `evaluate_models.ipynb`
@@ -216,7 +216,7 @@ Model selection should result in a set of instructions specifying the features a
 With a selected model specific by `models/instructions.json`, you can produce the final versions of each model. To be as representative as possible, these models are trained on data from both the training and test sets (both of which are phylogenetically balanced). For example, if the pipeline filename is `'./data/model_selection/temperature_optimum_features1_pipeline17-lasso.joblib'`, then `train_models` must be run from where from `data` is an immediate subdirectory.
 
 ```shell
-python3 -m genomic_spot.model_training.train_models --training_data_filename data/training_data/training_data_20231203.tsv --path_to_models models
+python3 -m genome_spot.model_training.train_models --training_data_filename data/training_data/training_data_20231203.tsv --path_to_models models
 ```
 
 ## 6. Perform analyses described in preprint

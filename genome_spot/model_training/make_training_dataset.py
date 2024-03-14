@@ -11,10 +11,8 @@ from typing import (
 
 import pandas as pd
 
-from ..genome_spot import (
-    measure_genome_features,
-    save_results,
-)
+from ..bioinformatics.genome import measure_genome_features
+from ..genome_spot import save_results
 from ..helpers import load_file_pairs_from_directory
 from .taxonomy import TaxonomyGTDB
 

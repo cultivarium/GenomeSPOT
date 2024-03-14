@@ -239,7 +239,7 @@ class Protein:
         }
 
         # Must prepend with "aa_" because code overlaps with nts
-        for aa, count in self.aa_1mer_frequencies().items():  # 20 variables
-            sequence_metrics["aa_{}".format(aa)] = count
+        for aa, freq in self.aa_1mer_frequencies().items():  # 20 variables
+            sequence_metrics["aa_{}".format(aa)] = freq
 
         return sequence_metrics

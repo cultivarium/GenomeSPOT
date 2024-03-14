@@ -4,6 +4,7 @@ Measures properties of a genome (fasta + protein-fasta).
 
 import gzip
 import io
+import json
 import logging
 from collections import defaultdict
 from pathlib import Path
@@ -47,9 +48,9 @@ class Genome:
             raise ValueError("Subsample must be between 0 and 1")
         self.subsample = subsample
         if Path(self.fna_filepath).exists() is False:
-            raise ValueError(f"Input file {self.fna_filepath} does not exist")
+            raise FileNotFoundError(f"Input file {self.fna_filepath} does not exist")
         if Path(self.faa_filepath).exists() is False:
-            raise ValueError(f"Input file {self.faa_filepath} does not exist")
+            raise FileNotFoundError(f"Input file {self.faa_filepath} does not exist")
         self.prefix = self.fna_filepath.split("/")[-1]
         self._protein_data = None
         self._protein_localization = None
@@ -242,3 +243,21 @@ class Genome:
             self.genomic_statistics["diff_extra_intra"][key] = val_extra - val_intra
 
         return self.genomic_statistics
+
+
+def measure_genome_features(faa_path: str, fna_path: str) -> Dict[str, dict]:
+    """Measure features from the provided genome files"""
+    logging.info("Measuring features from:\n\t%s\n\t%s", fna_path, faa_path)
+    genome_features = Genome(
+        contig_filepath=fna_path,
+        protein_filepath=faa_path,
+    ).measure_genome_features()
+    return genome_features
+
+
+def load_genome_features(features_json: str) -> Dict[str, dict]:
+    """Loads a JSON containing features, if available"""
+    logging.info("Loading existing genome features from %s", features_json)
+    with open(features_json, "r", encoding="utf-8") as fh:
+        genome_features = json.loads(fh.read())
+    return genome_features

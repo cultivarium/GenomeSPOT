@@ -14,7 +14,7 @@ import pandas as pd
 from ..bioinformatics.genome import measure_genome_features
 from ..genome_spot import save_results
 from ..helpers import load_file_pairs_from_directory
-from .taxonomy import TaxonomyGTDB
+from ..taxonomy.taxonomy import TaxonomyGTDB
 
 
 logger = multiprocessing.log_to_stderr()

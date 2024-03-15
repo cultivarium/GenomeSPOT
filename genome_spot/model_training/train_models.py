@@ -8,9 +8,7 @@ from typing import Tuple
 import joblib
 import numpy as np
 import pandas as pd
-from genome_spot.model_training import balance
 from sklearn.metrics import (
-    balanced_accuracy_score,
     confusion_matrix,
     f1_score,
     mean_squared_error,
@@ -25,15 +23,10 @@ from ..helpers import (
     load_training_data,
     rename_condition_to_variable,
 )
-from .balance import BalanceTaxa
 from .make_holdout_sets import (
-    BALANCE_PROPORTIONS,
-    THRESHOLDS_TO_KEEP,
-    balance_but_keep_extremes,
     make_cv_sets_by_phylogeny,
     yield_cv_sets,
 )
-from .taxonomy import TaxonomyGTDB
 
 
 logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)s %(message)s")
@@ -290,7 +283,6 @@ def train_models_for_each_condition(
     condition: str,
     df: pd.DataFrame,
     instructions: dict,
-    balancer: BalanceTaxa,
     path_to_models: str,
     path_to_holdouts: str,
 ):
@@ -307,7 +299,6 @@ def train_models_for_each_condition(
         condition (str): name of condition
         df (pd.DataFrame): training data
         instructions (dict): dictionary with instructions for each model
-        balancer (BalanceTaxa): object to balance data
         path_to_models (str): path to models directory
         path_to_holdouts (str): path to directory with train and test sets for each condition
     Returns:
@@ -368,14 +359,12 @@ def train_models(
     Returns:
         None
     """
-    taxonomy = TaxonomyGTDB()
-    balancer = BalanceTaxa(taxonomy=taxonomy)
     df = load_training_data(training_data_filename)
     instructions = load_instructions(f"{path_to_models}/instructions.json")
     logging.info("Training models for conditions: %s", ", ".join(instructions.keys()))
     for condition in instructions.keys():
         train_models_for_each_condition(
-            condition, df, instructions, balancer, path_to_models=path_to_models, path_to_holdouts=path_to_holdouts
+            condition, df, instructions, path_to_models=path_to_models, path_to_holdouts=path_to_holdouts
         )
 
 

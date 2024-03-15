@@ -4,7 +4,6 @@ import json
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
-from os import path
 from typing import (
     Dict,
     Tuple,

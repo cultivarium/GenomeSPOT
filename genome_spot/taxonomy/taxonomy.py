@@ -73,8 +73,10 @@ class TaxonomyGTDB:
         taxonomy_dict = {}
 
         for filename in self.taxonomy_filenames:
-            # with open(filename, "r") as fh:
-            fh = io.TextIOWrapper(io.BufferedReader(gzip.open(filename, "r")))
+            if filename.endswith(".gz"):
+                fh = io.TextIOWrapper(io.BufferedReader(gzip.open(filename, "r")))
+            else:
+                fh = open(filename, "r")
             fh.seek(0)
             for line in fh.readlines():
                 gtdb_accession, taxstring = line.strip().split("\t")

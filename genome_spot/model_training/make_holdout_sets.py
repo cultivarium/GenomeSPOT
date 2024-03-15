@@ -26,9 +26,9 @@ from ..helpers import (
     load_train_and_test_sets,
     load_training_data,
 )
-from .balance import BalanceTaxa
-from .partition import PartitionTaxa
-from .taxonomy import TaxonomyGTDB
+from ..taxonomy.balance import BalanceTaxa
+from ..taxonomy.partition import PartitionTaxa
+from ..taxonomy.taxonomy import TaxonomyGTDB
 
 
 logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)s %(message)s")

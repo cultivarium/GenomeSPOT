@@ -9,7 +9,7 @@ acidic.
 from typing import Dict
 
 import numpy as np
-from bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
+from Bio.SeqUtils.IsoelectricPoint import IsoelectricPoint
 
 from ..helpers import count_kmers
 from .signal_peptide import SignalPeptideHMM

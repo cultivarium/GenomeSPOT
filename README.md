@@ -8,14 +8,14 @@ Reference:
 # Quick start
 ## 1. Install package
 
-Install package:
+Install package in your virtual environment
 ```
 pip install -r requirements.txt
 ```
 
 Requirements:
 - hmmlearn==0.3.0
-- scikit-learn==1.2.2
+- scikit-learn==1.2.2 (The correct scikit-learn version is **ESSENTIAL** to use models)
 - biopython>=1.81
 - numpy>=1.23.5
 - pandas>=1.5.3

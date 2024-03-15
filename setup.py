@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
+from genome_spot._version import __version__
 from setuptools import (
     find_packages,
     setup,
 )
-from src._version import __version__
 
 
 setup(

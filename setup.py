@@ -26,6 +26,7 @@ setup(
         "numpy>=1.23.5",
         "pandas>=1.5.3",
         "bacdive>=0.2",
+        "pytest>=7.4.3",
     ],
     zip_safe=False,
 )

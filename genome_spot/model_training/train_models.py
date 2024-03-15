@@ -279,7 +279,7 @@ def save_data(target: str, features: list, genome_accessions: list, path_to_mode
     return record
 
 
-def train_models_for_each_condition(
+def train_model_for_each_condition(
     condition: str,
     df: pd.DataFrame,
     instructions: dict,
@@ -363,7 +363,7 @@ def train_models(
     instructions = load_instructions(f"{path_to_models}/instructions.json")
     logging.info("Training models for conditions: %s", ", ".join(instructions.keys()))
     for condition in instructions.keys():
-        train_models_for_each_condition(
+        train_model_for_each_condition(
             condition, df, instructions, path_to_models=path_to_models, path_to_holdouts=path_to_holdouts
         )
 

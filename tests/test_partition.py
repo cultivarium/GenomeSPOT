@@ -6,7 +6,7 @@ from genome_spot.taxonomy.taxonomy import TaxonomyGTDB
 
 
 cwd = Path(__file__).resolve().parent
-TAXONOMY_FILENAMES = [f"{cwd}/test_data/ar53_taxonomy_test.tsv", f"{cwd}/test_data/bac120_taxonomy_test.tsv"]
+TAXONOMY_FILENAMES = [f"{cwd}/test_data/test_ar53_taxonomy_r214.tsv", f"{cwd}/test_data/test_bac120_taxonomy_r214.tsv"]
 
 
 class TestPartitionTaxa:

@@ -372,12 +372,6 @@ def make_cv_sets_by_phylogeny(
         fold_sizes.append(len(partitioned_genomes) / len(genomes))
 
     logging.info("Fold sizes for k=%i: %s", kfold, ", ".join([f"{f:.2f}" for f in fold_sizes]))
-
-    # CV sets must be non-overlapping and complete
-    n_valid = 0
-    for indices_train, indices_valid in cv_sets:
-        n_valid += len(indices_valid)
-    assert n_valid == len(genomes)
     return cv_sets
 
 

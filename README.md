@@ -146,7 +146,7 @@ mkdir data/references
 # Download BacDive data
 vi .bacdive_credentials # username on line 1, password on line 2
 MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
-python3 -m genome_spot.model_training.download_training_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
+python3 -m genome_spot.model_training.download_trait_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
     --max $MAX_BACDIVE_ID \
     -b data/training_data/bacdive_data.json \
     -o data/training_data/trait_data.tsv \

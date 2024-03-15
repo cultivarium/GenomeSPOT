@@ -1,6 +1,6 @@
-# GenomeSPOT: prediction of optimum growth conditions from a genome
+# GenomeSPOT: <u>G</u>enome-based <u>S</u>alinity, <u>p</u>H, <u>O</u>xygen Tolerance, and <u>T</u>emperature for Bacteria and Archaea
 
-Predicts oxygen tolerance (obligate/facultative aerobe vs. obligate anaerobe) and optimum, min, and max temperature (C), salinity (% w/v NaCl), and pH preferences from bacterial and archaeal genomes using models trained on diverse, phylogenetically balanced sets of isolates.
+Predicts oxygen tolerance (obligate/facultative aerobe vs. obligate anaerobe) and optimum, min, and max temperature (C), salinity (% w/v NaCl), and pH for bacterial and archaeal genomes using statistical models trained on data for phylogenetically diverse microbial isolates.
 
 Reference:
 > (reference)
@@ -216,7 +216,7 @@ Model selection should result in a set of instructions specifying the features a
 With a selected model specific by `models/instructions.json`, you can produce the final versions of each model. To be as representative as possible, these models are trained on data from both the training and test sets (both of which are phylogenetically balanced). For example, if the pipeline filename is `'./data/model_selection/temperature_optimum_features1_pipeline17-lasso.joblib'`, then `train_models` must be run from where from `data` is an immediate subdirectory.
 
 ```shell
-python3 -m genome_spot.model_training.train_models --training_data_filename data/training_data/training_data_20231203.tsv --path_to_models models
+python3 -m genome_spot.model_training.train_models --training_data_filename data/training_data/training_data.tsv --path_to_models models --path_to_holdouts data/holdouts
 ```
 
 ## 6. Perform analyses described in preprint

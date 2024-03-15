@@ -17,7 +17,6 @@ CONTIG_FASTA = f"{cwd}/test_data/GCA_000172155.1_ASM17215v1_genomic.fna.gz"
 PROTEIN_FASTA = f"{cwd}/test_data/GCA_000172155.1_ASM17215v1_protein.faa.gz"
 GENOME_FEATURES_JSON = f"{cwd}/test_data/GCA_000172155.features.json"
 PREDICTIONS_JSON = f"{cwd}/test_data/GCA_000172155.predictions.json"
-PREDICTIONS_TSV = f"{cwd}/test_data/GCA_000172155.predictions.tsv"
 INSTRUCTIONS_JSON = f"{cwd}/test_data/instructions.json"
 MODEL_FILE = f"{cwd}/test_data/oxygen.joblib"
 CONDITIONS = ["oxygen", "temperature", "salinity", "ph"]

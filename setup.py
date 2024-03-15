@@ -20,7 +20,7 @@ setup(
     scripts=["genome_spot/"],
     python_requires=">=3.8.16",
     install_requires=[
-        "biopython==1.81",
+        "biopython>=1.83",
         "hmmlearn==0.3.0",
         "scikit-learn==1.2.2",
         "bacdive==0.2",

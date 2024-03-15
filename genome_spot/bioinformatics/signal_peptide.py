@@ -1,13 +1,13 @@
 """Class to perform prediction of signal peptide presence in proteins"""
-from pathlib import Path
+
+import os
 
 import joblib
 import numpy as np
 
 
-ROOT_DIR = str(Path(__file__).resolve().parent.parent.parent)
+TRAINED_MODEL = os.path.dirname(__file__) + "/hmm/hmm_signal_peptide.joblib"
 
-TRAINED_MODEL = f"{ROOT_DIR}/hmm/hmm_signal_peptide.joblib"
 SYMBOLS = [
     "A",
     "C",

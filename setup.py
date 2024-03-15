@@ -15,7 +15,7 @@ setup(
     author="Tyler Barnum",
     author_email="tyler@cultivarium.org",
     license="MIT License",
-    package_data={"genome_spot": []},
+    package_data={"genome_spot": ["bioinformatics/hmm/hmm_signal_peptide.joblib"]},
     packages=find_packages(exclude=["tests"]),
     scripts=["genome_spot/"],
     python_requires="==3.8.16",

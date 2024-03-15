@@ -18,7 +18,7 @@ setup(
     package_data={"genome_spot": []},
     packages=find_packages(exclude=["tests"]),
     scripts=["genome_spot/"],
-    python_requires=">=3.8.16",
+    python_requires="==3.8.16",
     install_requires=[
         "biopython>=1.83",
         "hmmlearn==0.3.0",

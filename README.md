@@ -8,7 +8,7 @@ Reference:
 # Quick start
 ## 1. Install package
 
-Install package in your virtual environment
+Clone the repo, create a virtual environment, then install packages:
 ```
 pip install -r requirements.txt
 ```

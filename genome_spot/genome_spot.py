@@ -43,6 +43,8 @@ class GenomeSPOT:
     Example usage:
 
     ```python
+    from genome_spot.genome_spot import GenomeSPOT
+    from genome_spot.bioinformatics.genome import measure_genome_features
     genome_features = measure_genome_features(faa_path, fna_path)
     predictions = GenomeSPOT().predict_from_genome(genome_features, path_to_models)
     tsv = GenomeSPOT().format_to_tsv(predictions)
@@ -145,14 +147,14 @@ class GenomeSPOT:
             for localization, feat_dict in genome_features.items()
             for feat, value in feat_dict.items()
         }
-        try:
-            assert len(features) == len(set(features).intersection(set(flat_genome_features.keys())))
-        except Exception as exc:
-            missing_features = set(features).difference(set(flat_genome_features.keys()))
-            raise ValueError(
-                f"Features were provided that are not found in genome features: {missing_features}"
-            ) from exc
-        X = np.array([flat_genome_features.get(x) for x in features]).reshape(1, -1)
+        # try:
+        #     assert len(features) == len(set(features).intersection(set(flat_genome_features.keys())))
+        # except Exception as exc:
+        #     missing_features = set(features).difference(set(flat_genome_features.keys()))
+        #     raise ValueError(
+        #         f"Features were provided that are not found in genome features: {missing_features}"
+        #     ) from exc
+        X = np.array([flat_genome_features.get(x, np.nan) for x in features]).reshape(1, -1)
         return X
 
     def predict_target_value(
@@ -170,23 +172,27 @@ class GenomeSPOT:
                 of confidence intervals
         """
         condition = target.replace("_optimum", "").replace("_min", "").replace("_max", "")
+        y_pred = None
         units = self.UNITS[condition]
         error = None
-        # probability = None
         warning = None
         novelty = None
 
-        if method == "predict":
-            y_pred = model.predict(X)[0]
-            y_pred, warning = self.check_prediction_range(y_pred, target)
-            if error_model is not None:
-                error = self.predict_error(y_pred, error_model)
-        elif method == "predict_proba":
-            y_pred_prob = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
-            y_pred, error = self.reformat_oxygen_prediction(y_pred_prob)
+        if any(np.isnan(X[0])):
+            # cannot predict
+            warning = "genome missing features"
+        else:
+            if method == "predict":
+                y_pred = model.predict(X)[0]
+                y_pred, warning = self.check_prediction_range(y_pred, target)
+                if error_model is not None:
+                    error = self.predict_error(y_pred, error_model)
+            elif method == "predict_proba":
+                y_pred_prob = model.predict_proba(X[0, :].reshape(1, -1))[:, 1][0]
+                y_pred, error = self.reformat_oxygen_prediction(y_pred_prob)
 
-        if novelty_model is not None:
-            novelty = self.predict_novelty(X, novelty_model)
+            if novelty_model is not None:
+                novelty = self.predict_novelty(X, novelty_model)
 
         prediction_dict = {
             "value": y_pred,
@@ -195,6 +201,7 @@ class GenomeSPOT:
             "warning": warning,
             "units": units,
         }
+
         return prediction_dict
 
     def predict_error(self, y: float, error_arr: np.ndarray):

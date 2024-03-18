@@ -158,7 +158,7 @@ class Protein:
     def aa_1mer_frequencies(self) -> Dict[str, float]:
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_1mer_frequencies is None:
-            if self.length > 1:
+            if len(self.sequence[self.start_pos :]) >= 1:
                 self._aa_1mer_frequencies = {
                     k: float(v / len(self.sequence[self.start_pos :]))
                     for k, v in count_kmers(self.sequence[self.start_pos :], k=1).items()
@@ -170,7 +170,7 @@ class Protein:
     def aa_2mer_frequencies(self) -> Dict[str, float]:
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_2mer_frequencies is None:
-            if self.length > 1:
+            if len(self.sequence[self.start_pos :]) >= 2:
                 self._aa_2mer_frequencies = {
                     k: float(v / len(self.sequence[self.start_pos :]))
                     for k, v in count_kmers(self.sequence[self.start_pos :], k=2).items()
@@ -200,13 +200,19 @@ class Protein:
         """Computes average carbon oxidation state (Zc) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        if self.length > 0:
+            return sum([WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        else:
+            return np.nan
 
     def nh2o(self) -> float:
         """Computes stoichiometric hydration state (nH2O) of a
         protein based on a dictionary of amino acids.
         """
-        return sum([NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        if self.length > 0:
+            return sum([NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
+        else:
+            return np.nan
 
     def thermostable_freq(self) -> float:
         """Thermostable residues reported by:
@@ -226,6 +232,9 @@ class Protein:
         ) = self.signal_peptide_model.predict_signal_peptide(self.sequence)
         if self.remove_signal_peptide is True:
             self.start_pos = signal_end_index + 1
+            # signal peptide should not be entire length
+            if self.start_pos > self.length:
+                self.start_pos = 1
         self.length = len(self.sequence[self.start_pos :])
 
         sequence_metrics = {

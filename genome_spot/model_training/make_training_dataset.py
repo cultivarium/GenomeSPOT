@@ -50,7 +50,10 @@ def generate_inputs(input_list: List[Tuple[str, str, str]], output_dir: str):
 def process_measure_genome_features(inputs: Tuple[int, str, str, str]):
     """Function to be called in multiprocessing pool. Measures genome features and saves to file."""
     n, faa_path, fna_path, output_prefix = inputs
-    genome_features = measure_genome_features(faa_path=faa_path, fna_path=fna_path)
+    try:
+        genome_features = measure_genome_features(faa_path=faa_path, fna_path=fna_path)
+    except:
+        genome_features = {}
     save_results(
         predictions={}, genome_features=genome_features, output_prefix=output_prefix, save_genome_features=True
     )

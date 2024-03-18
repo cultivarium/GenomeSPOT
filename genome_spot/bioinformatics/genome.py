@@ -8,6 +8,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
+from re import sub
 from typing import Dict
 
 import numpy as np
@@ -238,19 +239,20 @@ class Genome:
             self.genomic_statistics["membrane"] = self.compute_protein_statistics(subset_proteins=membrane)
 
         self.genomic_statistics["diff_extra_intra"] = {}
-        for key, val_extra in self.genomic_statistics["extracellular_soluble"].items():
+        for key, val_extra in self.genomic_statistics.get("extracellular_soluble", {}).items():
             val_intra = self.genomic_statistics["intracellular_soluble"].get(key, np.nan)
             self.genomic_statistics["diff_extra_intra"][key] = val_extra - val_intra
 
         return self.genomic_statistics
 
 
-def measure_genome_features(faa_path: str, fna_path: str) -> Dict[str, dict]:
+def measure_genome_features(faa_path: str, fna_path: str, subsample=1) -> Dict[str, dict]:
     """Measure features from the provided genome files"""
     logging.info("Measuring features from:\n\t%s\n\t%s", fna_path, faa_path)
     genome_features = Genome(
         contig_filepath=fna_path,
         protein_filepath=faa_path,
+        subsample=subsample,
     ).measure_genome_features()
     return genome_features
 

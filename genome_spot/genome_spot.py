@@ -2,10 +2,14 @@
 
 import json
 import logging
-from argparse import ArgumentParser
+from argparse import (
+    ArgumentParser,
+    Namespace,
+)
 from collections import defaultdict
 from typing import (
     Dict,
+    Optional,
     Tuple,
     Union,
 )
@@ -94,16 +98,20 @@ class GenomeSPOT:
                     "max",
                     "min",
                 ]:
+                    np.random.seed(12345)
                     target = f"{condition}_{attribute}"
                     model = joblib.load(f"{path_to_models}/{target}.joblib")
+                    model[-1].random_state = 12345
                     error_model = joblib.load(f"{path_to_models}/error_{target}.joblib")
                     predictions[target] = self.predict_target_value(
                         target=target, X=X, model=model, error_model=error_model, novelty_model=novelty_model
                     )
             elif condition == "oxygen":
+                np.random.seed(12345)
                 target = condition
                 features = instructions[condition]["features"]
                 model = joblib.load(f"{path_to_models}/{target}.joblib")
+                model[-1].random_state = 12345
                 X = self.genome_features_to_input_arr(features, genome_features)
                 predictions[target] = self.predict_target_value(
                     target=target,
@@ -272,7 +280,7 @@ def run_genome_spot(
     fna_path: str,
     faa_path: str,
     path_to_models: str,
-    features_json: str = None,
+    features_json: Optional[str] = None,
     skip_prediction: bool = False,
 ) -> Tuple[dict, dict]:
     """Main function for predicting traits from genome sequences (DNA and protein).
@@ -339,7 +347,7 @@ def parse_args():
         "-o",
         "--output-prefix",
         default=None,
-        require=False,
+        required=False,
         help="Prefix for output file <prefix>.predictions.tsv. If None, no output files will be saved.",
     )
     parser.add_argument(
@@ -373,7 +381,7 @@ def parse_args():
     return args
 
 
-def validate_args(args: ArgumentParser):
+def validate_args(args: Namespace):
     if (args.contigs is None or args.proteins is None) and args.genome_features is None:
         raise ValueError(
             """User must provide either files for contigs and 
@@ -381,7 +389,7 @@ def validate_args(args: ArgumentParser):
         )
 
 
-def main(args: ArgumentParser):
+def main(args: Namespace):
     predictions, genome_features = run_genome_spot(
         fna_path=args.contigs,
         faa_path=args.proteins,

@@ -5,7 +5,11 @@ import io
 import subprocess as sp
 from collections import Counter
 from pathlib import Path
-from typing import Tuple
+from typing import (
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 
@@ -29,7 +33,7 @@ class TaxonomyGTDB:
 
     """
 
-    def __init__(self, taxonomy_filenames: list = None):
+    def __init__(self, taxonomy_filenames: Optional[list] = None):
         self.indices = {
             "domain": 0,
             "phylum": 1,
@@ -42,7 +46,7 @@ class TaxonomyGTDB:
         self.taxonomy_filenames = self.download_taxonomy_files(taxonomy_filenames)
         self.taxonomy_dict = self.make_taxonomy_dict()
 
-    def download_taxonomy_files(self, taxonomy_filenames: list = None):
+    def download_taxonomy_files(self, taxonomy_filenames: Optional[list] = None):
         """Downloads taxonomy files if desired files not already in path"""
         if taxonomy_filenames is None:
             desired_files = ["ar53_taxonomy.tsv.gz", "bac120_taxonomy.tsv.gz"]
@@ -74,7 +78,7 @@ class TaxonomyGTDB:
 
         for filename in self.taxonomy_filenames:
             if filename.endswith(".gz"):
-                fh = io.TextIOWrapper(io.BufferedReader(gzip.open(filename, "r")))
+                fh = gzip.open(filename, "rt")
             else:
                 fh = open(filename, "r")
             fh.seek(0)
@@ -139,7 +143,7 @@ class TaxonomyGTDB:
         index = self.indices[taxlevel]
         return {k: v[index] for k, v in self.taxonomy_dict.items()}
 
-    def measure_diversity(self, query_rank: str, diversity_rank: str, subset_genomes: list = None) -> dict:
+    def measure_diversity(self, query_rank: str, diversity_rank: str, subset_genomes: Optional[list] = None) -> dict:
         """Counts the number of taxa at rank `diversity_rank`
         under each taxon of the `query_rank` for a set of genomes.
         """
@@ -157,7 +161,7 @@ class TaxonomyGTDB:
 
         return dict(Counter(ancestor_dict.values()))
 
-    def taxa_of_genomes(self, genomes: list, taxonomic_level: str):
+    def taxa_of_genomes(self, genomes: Union[list, set], taxonomic_level: str):
         """Get taxa for a set of genomes at the specified level"""
         taxa = set()
         for genome in genomes:

@@ -1,3 +1,4 @@
+# pylint: disable=missing-docstring
 import pytest
 from genome_spot.bioinformatics.dna import DNA
 

@@ -1,5 +1,4 @@
-from collections import Counter
-
+# pylint: disable=missing-docstring
 import pytest
 from genome_spot.bioinformatics.protein import Protein
 

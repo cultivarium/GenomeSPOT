@@ -1,7 +1,7 @@
+# pylint: disable=missing-docstring
 import json
 from pathlib import Path
 
-import genome_spot
 import joblib
 import numpy as np
 import pytest

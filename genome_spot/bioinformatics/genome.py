@@ -82,7 +82,7 @@ class Genome:
             # randomly subsample dictionary
             if self.subsample < 1.0:
                 subsample_size = int(self.subsample * len(self._protein_data))
-                random_proteins = np.random.choice(list(self._protein_data.keys()), size=subsample_size)
+                random_proteins = np.random.choice(list(self._protein_data.keys()), size=subsample_size, replace=False)
                 self._protein_data = {k: self._protein_data[k] for k in random_proteins}
 
         return self._protein_data
@@ -246,14 +246,15 @@ class Genome:
         return self.genomic_statistics
 
 
-def measure_genome_features(faa_path: str, fna_path: str, subsample=1) -> Dict[str, dict]:
+def measure_genome_features(faa_path: str, fna_path: str, subsample=1.0) -> Dict[str, dict]:
     """Measure features from the provided genome files"""
     logging.info("Measuring features from:\n\t%s\n\t%s", fna_path, faa_path)
-    genome_features = Genome(
+    genome_calc = Genome(
         contig_filepath=fna_path,
         protein_filepath=faa_path,
         subsample=subsample,
-    ).measure_genome_features()
+    )
+    genome_features = genome_calc.measure_genome_features()
     return genome_features
 
 

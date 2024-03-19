@@ -38,7 +38,7 @@ class BalanceTaxa:
     def balance_dataset(
         self,
         genomes: list,
-        proportion_to_keep: float = None,
+        proportion_to_keep: float,
         diversity_rank: str = "species",
     ):
         """

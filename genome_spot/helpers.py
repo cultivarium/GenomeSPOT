@@ -1,4 +1,4 @@
-"""Generally useful functions"""
+"""Helper functions used by multiple modules"""
 
 import json
 from collections import Counter

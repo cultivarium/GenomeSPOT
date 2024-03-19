@@ -1,6 +1,6 @@
+# pylint: disable=missing-docstring
 from pathlib import Path
 
-import pytest
 from genome_spot.taxonomy.balance import BalanceTaxa
 from genome_spot.taxonomy.taxonomy import TaxonomyGTDB
 
@@ -16,7 +16,6 @@ class TestBalanceTaxa:
         expected_values = ["GCA_003216535", "GCA_003513495", "GCA_005801235", "GCA_006348925"]
         with open(f"{cwd}/test_data/test_genome_accessions.txt", "r") as fh:
             genomes = [line.strip() for line in fh.readlines()]
-        print(len(genomes))
         taxonomy = TaxonomyGTDB(TAXONOMY_FILENAMES)
         balancer = BalanceTaxa(taxonomy=taxonomy)
         balanced_genomes = balancer.balance_dataset(genomes=genomes, proportion_to_keep=0.02, diversity_rank="species")

@@ -1,6 +1,6 @@
+# pylint: disable=missing-docstring
 from pathlib import Path
 
-import pytest
 from genome_spot.taxonomy.taxonomy import TaxonomyGTDB
 
 

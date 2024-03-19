@@ -1,12 +1,10 @@
+# pylint: disable=missing-docstring
 import json
-from operator import index
 from pathlib import Path
 
 import pandas as pd
-import pytest
 from genome_spot.model_training.download_trait_data import (
     ComputeBacDiveTraits,
-    get_bacdive_trait_data,
     load_targets_to_dataframe,
 )
 

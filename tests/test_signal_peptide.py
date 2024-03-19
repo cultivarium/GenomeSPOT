@@ -1,4 +1,4 @@
-import pytest
+# pylint: disable=missing-docstring
 from genome_spot.bioinformatics.signal_peptide import SignalPeptideHMM
 
 

@@ -47,7 +47,7 @@ gzip genome.fna
 
 Each prediction (e.g. optimum temperature) has: 
 - **A predicted value and units**: For oxygen, the predicted value is a classification of tolerance as "tolerant" or "not tolerant". For continuous variables, values are in the units C for temperature, %w/v sodium chloride for salinity, and standard units for pH. 
-- **An estimated error**: For oxygen, the error is provided as the probability of the classification from 0.5 to 1 (p<0.5 results in the other classification). We recommend basing decisions on highly confidence predictions (p>0.75). For continuous variables only. The error is the root mean squared error (RSME) for cross-validation predictions in the training dataset that were within +/-0.5 pH units, +/-1 % NaCl, or +/-5 C of the predicted value.
+- **An estimated error**: For oxygen, the error is provided as the probability of the classification from 0.5 to 1 (p<0.5 results in the other classification). We recommend basing decisions on highly confident predictions (p>0.75). For continuous variables only, the error is the root mean squared error (RSME) for cross-validation predictions in the training dataset that were within +/-0.5 pH units, +/-1 % NaCl, or +/-5 C of the predicted value.
 - **A novelty detection**: [Novelty detection](https://scikit-learn.org/stable/modules/outlier_detection.html#novelty-detection) is like outlier detection, except it is based on a training dataset. For each condition, a genome is novel if its features are more unusual that 98% of the training data. On GTDB genomes, we observed ~4% of genomes have unusual features for oxygen and temperature prediction, and ~10-15% of genomes have unusual features for salinity and pH prediction.
 - **A warning flag**: raised if the predicted value initially exceeded the sensical range (values observed in published data) and was set to the min or max allowed value. If a warning flag exists, the prediction should be considered suspect unless it's a predicted salinity minimum or optimum at 0, which is common. 
 
@@ -88,12 +88,12 @@ Predictions can be inaccurate:
 
 Our models were built using phylogenetic balancing and partitioning to improve accuracy:
 
-- **Phylogenetic balancing** addresses phylogenetic bias or imbalance by removing genomes from taxa that are more common than they should be. Our models were created and evaluated by removing 50% of genomes, preferentially removing taxa more common in BacDive than in the Genome Taxonomy Database. For example, Pseudomonadota over Verrucomicrobiota and Escherichia over Ktedonobacter.
+- **Phylogenetic balancing** addresses phylogenetic bias or imbalance by removing genomes from taxa that are more common than they should be. Our models were created and evaluated by removing 50% of genomes, preferentially removing taxa more common in [BacDive](https://bacdive.dsmz.de/) than in the [Genome Taxonomy Database](https://gtdb.ecogenomic.org/). For example, Pseudomonadota over Verrucomicrobiota and Escherichia over Ktedonobacter.
 - **Phylogenetic partitioning** addresses "data leakage" caused by phylogenetic similarity by creating test sets with different clades of organisms than those in the training sets. The test set used to evaluate our model was created by selecting random families adding up to 20% of the genomes in the dataset. To ensure extreme values are included in both the training and test dataset, extreme values are split separately, which means that a family can be present in both the training and test dataset, but the family members will have different growth conditions.
 
 # How to use with multiple genomes
 
-If you have made predictions for many genomes and want results in a single table, a helper script is provided to join predictions for multiple genomes into a single TSV (`all.predictions.tsv`). The first and second rows of the table indicate. respectively, the growth condition being predicted (e.g. `temperature_optimum`) and the type of data in the column (e.g. `error`). All other rows contain data per genome.
+If you have made predictions for many genomes and want results in a single table, a helper script is provided to join predictions for multiple genomes into a single TSV (`all.predictions.tsv`). The first and second rows of the table indicate, respectively, the growth condition being predicted (e.g. `temperature_optimum`) and the type of data in the column (e.g. `error`). All other rows contain data per genome.
 
 ```python
 python3 -m genome_spot.join_outputs --dir data/predictions --write-to-tsv
@@ -144,7 +144,8 @@ mkdir data/genomes
 mkdir data/references
 
 # Download BacDive data
-vi .bacdive_credentials # username on line 1, password on line 2
+BACDIVE_USERNAME=my_username
+BACDIVE_PASSWORD=my_password
 MAX_BACDIVE_ID=171000 # UPDATE THIS OVER TIME!!!
 python3 -m genome_spot.model_training.download_trait_data -u $BACDIVE_USERNAME -p $BACDIVE_PASSWORD \
     --max $MAX_BACDIVE_ID \
@@ -209,7 +210,7 @@ python3 -m genome_spot.model_training.run_model_selection --training_data_filena
 
 The script saves models and statistics to the output directory. The statistics can be assessed and used to select a model using the notebook `evaluate_models.ipynb`
 
-Model selection should result in a set of instructions specifying the features and estimator to be used for each condition. The features are specified by a list of features, and the estimator is specified by a link to the model saved by the above script. These instructions should be saved in a file in the directory where models will be placed, like the existing `models/instructions.json` file. Importantly, the 'pipeline_filename' specified in instructions must be a path that is interpretable when running the below script `train_models`. 
+Model selection should result in a set of instructions specifying the features and estimator to be used for each condition. The features are specified by a list of features, and the estimator is specified by a link to the model saved by the above script. These instructions should be saved in a file in the directory where models will be placed, like the existing `models/instructions.json` file. Importantly, the 'pipeline_filename' specified in the `instructions.json` must be a path that is interpretable when running the below script `train_models`. 
 
 ## 5. Produce the final model using all available data
 
@@ -227,3 +228,12 @@ Some analyses involved genomes from the Genome Taxonomy Database and JGI Genomic
 
 - https://data.gtdb.ecogenomic.org/
 - https://portal.nersc.gov/GEM/
+
+
+# Unit Tests
+
+To run unit tests:
+
+```shell
+pytest -v -s tests/
+```

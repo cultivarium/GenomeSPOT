@@ -1,16 +1,15 @@
+# pylint: disable=missing-docstring
 from collections import Counter
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 from genome_spot.model_training.make_holdout_sets import (
     make_cv_sets_by_phylogeny,
     partition_within_percentiles,
 )
 from genome_spot.taxonomy.partition import PartitionTaxa
 from genome_spot.taxonomy.taxonomy import TaxonomyGTDB
-from tests import test_taxonomy
 
 
 cwd = Path(__file__).resolve().parent

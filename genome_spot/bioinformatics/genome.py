@@ -8,7 +8,6 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from re import sub
 from typing import Dict
 
 import numpy as np
@@ -19,7 +18,6 @@ from .protein import (
     DIFF_HYDROPHOBICITY_MEMBRANE,
     Protein,
 )
-from .signal_peptide import SignalPeptideHMM
 
 
 class Genome:
@@ -54,6 +52,7 @@ class Genome:
             raise FileNotFoundError(f"Input file {self.faa_filepath} does not exist")
         self.prefix = self.fna_filepath.split("/")[-1]
         self._protein_data = None
+        self._protein_data_keys = None
         self._protein_localization = None
 
     def protein_data(self):
@@ -79,6 +78,8 @@ class Genome:
                 ).protein_metrics()
             fh.close()
 
+            self._protein_data_keys = set([key for _dict in self._protein_data.values() for key in _dict.keys()])
+
             # randomly subsample dictionary
             if self.subsample < 1.0:
                 subsample_size = int(self.subsample * len(self._protein_data))
@@ -95,20 +96,22 @@ class Genome:
         protein_statistics = {}
 
         if subset_proteins:
-            values_by_protein = {k: self.protein_data()[k] for k in subset_proteins}
+            values_by_protein = {k: self.protein_data()[k] for k in sorted(subset_proteins)}
         else:
             values_by_protein = self.protein_data()
 
+        # Record values across proteins in lists
         values_dict = defaultdict(list)
         for protein, stats in values_by_protein.items():
-            for key, value in stats.items():
-                if value:
-                    values_dict[key].append(value)
+            if stats.get("length", np.nan) > 0:
+                for key in sorted(self._protein_data_keys):
+                    values_dict[key].append(stats.get(key, np.nan))
 
+        # Overall statistics
         protein_statistics["total_proteins"] = len(values_dict["length"])
         protein_statistics["total_protein_length"] = int(np.sum(values_dict["length"]))
 
-        # distributions
+        # Distributions
         pis = np.array(values_dict["pi"])
         protein_statistics["pis_acidic"] = float(np.sum((pis < 5.5)) / len(pis))
         protein_statistics["pis_neutral"] = float(np.sum(((pis >= 5.5) & (pis < 8.5))) / len(pis))
@@ -137,7 +140,7 @@ class Genome:
             protein_statistics["proportion_R_RK"] = float(arg / (arg + lys))
 
         # amino acid k-mer frequencies
-        for variable, values in values_dict.items():
+        for variable, values in sorted(values_dict.items()):
             if variable.startswith("aa_"):
                 protein_statistics[variable] = self._length_weighted_average(values, values_dict["length"])
 
@@ -199,7 +202,6 @@ class Genome:
 
             genome += "NN" + sequence
         fh.close()
-        #
         nucleotide_calc = DNA(genome)
         genome_statistics.update(nucleotide_calc.nucleotide_metrics())
         return genome_statistics

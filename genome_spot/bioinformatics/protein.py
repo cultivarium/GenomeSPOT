@@ -158,10 +158,10 @@ class Protein:
     def aa_1mer_frequencies(self) -> Dict[str, float]:
         """Returns count of every amino acid ignoring start methionine"""
         if self._aa_1mer_frequencies is None:
-            if len(self.sequence[self.start_pos :]) >= 1:
+            trimmed_sequence = self.sequence[self.start_pos :]
+            if len(trimmed_sequence) >= 1:
                 self._aa_1mer_frequencies = {
-                    k: float(v / len(self.sequence[self.start_pos :]))
-                    for k, v in count_kmers(self.sequence[self.start_pos :], k=1).items()
+                    k: float(v / len(trimmed_sequence)) for k, v in count_kmers(trimmed_sequence, k=1).items()
                 }
             else:
                 self._aa_1mer_frequencies = {}
@@ -248,7 +248,8 @@ class Protein:
         }
 
         # Must prepend with "aa_" because code overlaps with nts
-        for aa, freq in self.aa_1mer_frequencies().items():  # 20 variables
+        for aa in STANDARD_AMINO_ACIDS:
+            freq = self.aa_1mer_frequencies().get(aa, 0)
             sequence_metrics["aa_{}".format(aa)] = freq
 
         return sequence_metrics

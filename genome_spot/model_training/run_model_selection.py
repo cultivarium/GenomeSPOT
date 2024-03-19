@@ -261,7 +261,9 @@ class ModelSelection:
         lasso = [
             (
                 scaler,
-                Lasso(alpha=alpha),
+                Lasso(
+                    alpha=alpha,
+                ),
             )
             for alpha in np.logspace(-3, 0, 4)
         ]

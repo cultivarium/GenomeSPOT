@@ -69,7 +69,6 @@ def train_model(
     X_train = df_train[features].values
     y_train = df_train[target]
     pipeline[-1].max_iter = 50000  # spare no expense!
-    pipeline[-1].random_state = 12345  # death to randomness!
     pipeline.fit(X_train, y_train)
     if save is True:
         joblib.dump(pipeline, f"{path_to_models}/{target}.joblib")

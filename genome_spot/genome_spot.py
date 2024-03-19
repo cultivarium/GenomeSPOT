@@ -87,31 +87,28 @@ class GenomeSPOT:
             predictions: nested dict of each target's predicted value, error, novelty, warning, and units
         """
         predictions = defaultdict(dict)
+        print(genome_features.get("extracellular_soluble").get("aa_M"))
         instructions = self.load_instructions(f"{path_to_models}/instructions.json")
         for condition in instructions.keys():
             novelty_model = joblib.load(f"{path_to_models}/novelty_{condition}.joblib")
             if condition in ["ph", "temperature", "salinity"]:
                 features = instructions[condition]["features"]
-                X = self.genome_features_to_input_arr(features, genome_features)
                 for attribute in [
                     "optimum",
                     "max",
                     "min",
                 ]:
-                    np.random.seed(12345)
+                    X = self.genome_features_to_input_arr(features, genome_features)
                     target = f"{condition}_{attribute}"
                     model = joblib.load(f"{path_to_models}/{target}.joblib")
-                    model[-1].random_state = 12345
                     error_model = joblib.load(f"{path_to_models}/error_{target}.joblib")
                     predictions[target] = self.predict_target_value(
                         target=target, X=X, model=model, error_model=error_model, novelty_model=novelty_model
                     )
             elif condition == "oxygen":
-                np.random.seed(12345)
                 target = condition
                 features = instructions[condition]["features"]
                 model = joblib.load(f"{path_to_models}/{target}.joblib")
-                model[-1].random_state = 12345
                 X = self.genome_features_to_input_arr(features, genome_features)
                 predictions[target] = self.predict_target_value(
                     target=target,
@@ -152,16 +149,9 @@ class GenomeSPOT:
         """
         flat_genome_features = {
             f"{localization}_{feat}": value
-            for localization, feat_dict in genome_features.items()
-            for feat, value in feat_dict.items()
+            for localization, feat_dict in sorted(genome_features.items())
+            for feat, value in sorted(feat_dict.items())
         }
-        # try:
-        #     assert len(features) == len(set(features).intersection(set(flat_genome_features.keys())))
-        # except Exception as exc:
-        #     missing_features = set(features).difference(set(flat_genome_features.keys()))
-        #     raise ValueError(
-        #         f"Features were provided that are not found in genome features: {missing_features}"
-        #     ) from exc
         X = np.array([flat_genome_features.get(x, np.nan) for x in features]).reshape(1, -1)
         return X
 

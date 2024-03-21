@@ -1,10 +1,11 @@
 # Scientific Notebooks
 
-In addition to a tutorial notebook `tutorial.ipynb` to acquaint the reader with code in this package, this directory contains notebooks use to create models and figures from the publication:
+This directory contains notebooks use to create models and figures from the publication:
 
-- `make_signal_peptide_hmm.ipynb`
-- `prepare_training_data.ipynb`
-- `train_models.ipynb`
-- `analyze_correlations.ipynb`
-- `analyze_all_species.ipynb`
-- `analyze_metagenomes.ipynb`
+- `tutorial.ipynb`: for reader to acquiant themselves with code in this package
+- `prepare_training_data.ipynb`: Additional quality control
+- `analyze_correlations.ipynb`: Figure 1
+- `evaluate_models.ipynb`: Figure 2
+- `analyze_all_species.ipynb`: Figure 3
+- `analyze_metagenomes.ipynb`: Figure 4
+- `make_signal_peptide_hmm.ipynb`: Signal peptide model development

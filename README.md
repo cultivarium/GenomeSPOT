@@ -3,7 +3,8 @@
 Predicts oxygen tolerance (obligate/facultative aerobe vs. obligate anaerobe) and optimum, min, and max temperature (C), salinity (% w/v NaCl), and pH for bacterial and archaeal genomes using statistical models trained on data for phylogenetically diverse microbial isolates.
 
 Reference:
-> (reference)
+> _Tyler Barnum, Alexander Crits-Christoph, Michael Molla, Paul Carini, Henry H. Lee, and Nili Ostrov_. Predicting microbial growth conditions from amino acid composition. bioRxiv, 2024
+
 
 # Quick start
 ## 1. Install package

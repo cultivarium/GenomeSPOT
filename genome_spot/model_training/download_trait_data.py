@@ -384,7 +384,7 @@ class ComputeBacDiveTraits:
         else:
             return salinities
 
-    def _onehot_range(arr, min_bin: float, max_bin: float, step: float, prefix: str) -> Dict[str, float]:
+    def _onehot_range(self, arr, min_bin: float, max_bin: float, step: float, prefix: str) -> Dict[str, float]:
         """Return onehot ranges formatted with prefixes"""
         onehot_dict = {}
         for bin_floor in np.arange(min_bin, max_bin, step):

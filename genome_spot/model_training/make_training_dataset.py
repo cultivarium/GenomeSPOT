@@ -41,7 +41,6 @@ IGNORE_GENOMES = [
 
 def generate_inputs(input_list: List[Tuple[str, str, str]], output_dir: str):
     """Generator to yield inputs in multiprocessing pool"""
-    # ((n, Path(faa_path), Path(fna_path), output_path) for n, (faa_path, fna_path, output_path) in enumerate(input_list))
     for n, (genome_accession, faa_path, fna_path) in enumerate(input_list):
         output_prefix = f"{output_dir}/{genome_accession}"
         yield n, Path(faa_path), Path(fna_path), output_prefix

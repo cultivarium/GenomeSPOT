@@ -44,9 +44,12 @@ class SignalPeptideHMM:
 
     References:
     - Eddy, S. What is a hidden Markov model?. Nat Biotechnol 22, 1315–1316 (2004).
-    - Pantelis G. Bagos et. al, Combined prediction of Tat and Sec signal peptides with hidden Markov models, Bioinformatics (2010)
-    - Nielsen, H., & Krogh, A. . Prediction of signal peptides and signal anchors by a hidden Markov model. In Ismb (1998).
-    - For comparing accuracy to SignalP versions: Almagro Armenteros et al. SignalP 5.0 improves signal peptide predictions using deep neural networks. Nat Biotechnol (2019)
+    - Pantelis G. Bagos et. al, Combined prediction of Tat and Sec signal
+      peptides with hidden Markov models, Bioinformatics (2010)
+    - Nielsen, H., & Krogh, A. . Prediction of signal peptides and signal
+      anchors by a hidden Markov model. In Ismb (1998).
+    - For comparing accuracy to SignalP versions: Almagro Armenteros et al.
+      SignalP 5.0 improves signal peptide predictions using deep neural networks. Nat Biotechnol (2019)
 
     Args:
         model_file: filename of pretrained HMM file, default: model provided in package

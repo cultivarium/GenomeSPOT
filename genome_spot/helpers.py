@@ -62,6 +62,7 @@ def load_file_pairs_from_directory(directory, suffix_fna, suffix_faa) -> Tuple[l
     pathlist = []
     fna_paths = genome_accession_to_filepath_from_suffix(suffix_fna, directory)
     faa_paths = genome_accession_to_filepath_from_suffix(suffix_faa, directory)
+
     for genome_accession in fna_paths.keys() & faa_paths.keys():
         fna_path = fna_paths[genome_accession]
         faa_path = faa_paths[genome_accession]

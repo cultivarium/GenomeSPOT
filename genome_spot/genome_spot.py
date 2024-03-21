@@ -87,7 +87,6 @@ class GenomeSPOT:
             predictions: nested dict of each target's predicted value, error, novelty, warning, and units
         """
         predictions = defaultdict(dict)
-        print(genome_features.get("extracellular_soluble").get("aa_M"))
         instructions = self.load_instructions(f"{path_to_models}/instructions.json")
         for condition in instructions.keys():
             novelty_model = joblib.load(f"{path_to_models}/novelty_{condition}.joblib")
@@ -303,7 +302,12 @@ def run_genome_spot(
     return predictions, genome_features
 
 
-def save_results(predictions: dict, genome_features: dict, output_prefix: str, save_genome_features: bool):
+def save_results(
+    predictions: Optional[dict] = None,
+    genome_features: Optional[dict] = None,
+    output_prefix: Optional[str] = None,
+    save_genome_features: bool = True,
+):
     """Saves results to file if output_prefix is provided""" ""
     if output_prefix is not None:
         if save_genome_features is True:

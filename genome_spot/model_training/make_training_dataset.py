@@ -55,7 +55,7 @@ def process_measure_genome_features(inputs: Tuple[int, str, str, str]):
     except:
         genome_features = {}
     save_results(
-        predictions={}, genome_features=genome_features, output_prefix=output_prefix, save_genome_features=True
+        predictions=None, genome_features=genome_features, output_prefix=output_prefix, save_genome_features=True
     )
     if n % 1000 == 0:
         logger.info("%i features calculated", n)
@@ -114,8 +114,11 @@ def load_features_to_dataframe(features_dir: str) -> pd.DataFrame:
     """
     sers = []
     for filename in glob(features_dir + "*.features.json"):
-        ser_genome = load_features_json_to_df(filename)
-        sers.append(ser_genome)
+        try:
+            ser_genome = load_features_json_to_df(filename)
+            sers.append(ser_genome)
+        except:
+            pass
     df_features = pd.concat(sers, axis=1).T
 
     # Missing data should be 0

@@ -161,4 +161,5 @@ cython_debug/
 
 
 # Project files
-GCA_000172155.predictions.tsv
+GCA_000172155.1.predictions.tsv
+temp.txt

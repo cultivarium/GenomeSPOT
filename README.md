@@ -84,6 +84,8 @@ Predictions can be inaccurate:
 - The user is **strongly encouraged** (required if I could!) to understand inaccuracies of the model by reading the publication
 - The warning is most likely to occur when the organism is very different than organisms in the training dataset and/or was predicted to have few or no extracellular proteins, which are used in predicting salinity and pH. Please also note that extremophiles have atypical amino acid distributions that make predictions slightly less accurate. For example, oxygen tolerance predictions are slightly less accurate at higher temperature.
 - A flag enables saving the intermediate output, the features calculated on a genome, which can be use to understand errors or to train other models.
+- When run on all 85205 genomes in the Genome Taxonomy Database, only 0.3% of genomes were missing predictions and most of these cases were genomes with low numbers of proteins (<700).
+
 
 
 Our models were built using phylogenetic balancing and partitioning to improve accuracy:
@@ -169,7 +171,7 @@ gunzip data/references/*tsg.gz
 
 Measure features from genomes and join them with the target variables to be predicted - i.e. trait data from BacDive - to create the training dataset.
 
-Runtime: under a day for ~10-20k genomes.
+Runtime: roughly one hour for ~10-20k genomes.
 
 ```shell
 python3 -m genome_spot.model_training.make_training_dataset -p 7 \
@@ -202,7 +204,7 @@ python3 -m genome_spot.model_training.make_holdout_sets --training_data_filename
 
 In the preprint, we describe testing different sets of features (e.g. only amino acid frequencies) with different types of models (e.g. [least squares, ridge, and lasso linear regressions](https://scikit-learn.org/stable/modules/linear_model.html)). To reproduce that workflow, you can run the script `run_model_selection.py`. The sets of features and estimators are hard-coded into the script `run_model_selection`, so you will be unable to try new sets of features or models without modifying code.
 
-Runtime: ~10 minutes.
+Runtime: 10-20 minutes.
 
 ```shell
 python3 -m genome_spot.model_training.run_model_selection --training_data_filename data/training_data/training_data.tsv --path_to_holdouts data/holdouts --outdir data/model_selection/

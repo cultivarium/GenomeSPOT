@@ -9,8 +9,11 @@ Reference:
 # Quick start
 ## 1. Install package
 
-Clone the repo, create a virtual environment, then install packages:
-```
+Clone the repo, create a virtual environment, then install the package and its requirements:
+```shell
+git clone https://github.com/cultivarium/GenomeSPOT.git
+cd GenomeSPOT
+pip install .
 pip install -r requirements.txt
 ```
 
@@ -137,7 +140,7 @@ Data is downloaded from two resources:
 - BacDive API (**instructions for credentials here**: https://api.bacdive.dsmz.de/)
 - Genome Taxonomy Database (info: https://gtdb.ecogenomic.org/)
 
-Runtime: under a day.
+Runtime: 4-8 hours.
 
 ```shell
 # Create directory structure
@@ -172,7 +175,7 @@ gunzip data/references/*tsg.gz
 
 Measure features from genomes and join them with the target variables to be predicted - i.e. trait data from BacDive - to create the training dataset.
 
-Runtime: roughly one hour for ~10-20k genomes.
+Runtime: roughly two hours for ~10-20k genomes.
 
 ```shell
 python3 -m genome_spot.model_training.make_training_dataset -p 7 \
@@ -218,6 +221,8 @@ Model selection should result in a set of instructions specifying the features a
 ## 5. Produce the final model using all available data
 
 With a selected model specific by `models/instructions.json`, you can produce the final versions of each model. To be as representative as possible, these models are trained on data from both the training and test sets (both of which are phylogenetically balanced). For example, if the pipeline filename is `'./data/model_selection/temperature_optimum_features1_pipeline17-lasso.joblib'`, then `train_models` must be run from where from `data` is an immediate subdirectory.
+
+Runtime: 1-2 minutes
 
 ```shell
 python3 -m genome_spot.model_training.train_models --training_data_filename data/training_data/training_data.tsv --path_to_models models --path_to_holdouts data/holdouts

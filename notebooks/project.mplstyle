@@ -1,0 +1,19 @@
+axes.titlesize : 12
+axes.labelsize : 12
+xtick.labelsize : 12
+ytick.labelsize : 12
+lines.linewidth : 1
+lines.markersize : 10
+
+font.family:  sans-serif
+font.sans-serif: Avenir
+font.size:    12.0
+
+axes.spines.top : False
+axes.spines.right : False
+xtick.direction : out
+ytick.direction : out
+
+
+axes.prop_cycle: cycler('color', ['black', 'slateblue', 'slategray', 'cornflowerblue',  'orangered', 'mediumseagreen','yellowgreen', ])
+image.cmap : RdBu_r

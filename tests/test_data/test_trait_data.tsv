@@ -1,0 +1,101 @@
+	ncbi_accession	ncbi_taxid	strain_id	species	ph_optimum	ph_optimum_min	ph_optimum_max	temperature_optimum	salinity_optimum	salinity_midpoint	salinity_min	salinity_max	ph_min	ph_max	temperature_min	temperature_max	oxygen	use_ph	use_temperature	use_salinity	use_oxygen	aerobe	anaerobe	microaerophile	facultative anaerobe	obligate aerobe	obligate anaerobe	facultative aerobe	aerotolerant	microaerotolerant	ncbi_accession_2
+0	GCA_003143535.1	2516557.0	166247	Allopseudarcicella aquatilis	7.0	7.0	7.0	30.0		0.0	0.0	0.0	7.0	8.0	10.0	30.0	1.0	False	False	False	True	1.0									GCA_003143535
+1	GCA_028912405.1	348610.0	7036	Methanogenium marinum											22.0	22.0	0.0	False	False	False	True		1.0								GCA_028912405
+2	GCA_000768705.1	1385520.0	6269	Knoellia sinensis											28.0	30.0	1.0	False	False	False	True	1.0									GCA_000768705
+3	GCA_000412675.1	1211579.0	12871	Pseudomonas putida											26.0	30.0		False	False	False	False										GCA_000412675
+4	GCA_900450135.1	562.0	146706	Escherichia coli														False	False	False	False										GCA_900450135
+5	GCA_001886715.1	2213200.0	164366	Nocardia mangyaensis	8.0	8.0	8.0	28.0	1.5	1.5	0.0	3.0	6.0	9.0	10.0	38.0	1.0	False	True	False	True	1.0									GCA_001886715
+6	GCA_003966655.1	1232575.0	130138	Acidithiobacillus ferridurans	2.1	2.1	2.1	29.0					2.1	2.1	29.0	30.0	1.0	True	False	False	True				1.0						GCA_003966655
+7	GCA_000711225.1	1122946.0	4225	Pelobacter seleniigenes					1.8	1.8	0.1	3.5			28.0	28.0	0.0	False	False	True	True		1.0								GCA_000711225
+8	GCA_000012765.1	2095.0	136325	Mycoplasma capricolum											37.0	37.0		False	False	False	False										GCA_000012765
+9	GCA_000723365.1	273136.0	134102	Mycoplasma amphoriforme				37.0							37.0	37.0	1.0	False	False	False	True				1.0						GCA_000723365
+10	GCA_014334095.1	2762729.0	167232	Novosphingopyxis iocasae														False	False	False	False										GCA_014334095
+11	GCA_003846135.1	69224.0	4397	Erwinia psidii											25.0	30.0	1.0	False	False	False	True	1.0									GCA_003846135
+12	GCA_000220705.1	1038929.0	16464	Streptomyces xinghaiensis	7.5	7.5	7.5	28.0	2.5	4.5	0.0	9.0	6.0	9.0	10.0	45.0	1.0	False	False	False	True	1.0									GCA_000220705
+13	GCA_000423465.1	1122999.0	12670	Propionicicella superfundia											28.0	30.0	0.0	False	False	False	True		1.0								GCA_000423465
+14	GCA_003149185.1	379075.0	131161	Sediminitomix flava				37.5	2.5	2.5	1.0	4.0			15.0	40.0	1.0	False	True	False	True	1.0									GCA_003149185
+15	GCA_005221745.1	562.0	157713	Escherichia coli											37.0	37.0		False	False	False	False										GCA_005221745
+16	GCA_018069625.1	155177.0	16356	Streptomyces yatensis						0.0	0.0	0.0			28.0	28.0		False	False	False	False										GCA_018069625
+17	GCA_000964425.1	66229.0	92	Komagataeibacter intermedius											30.0	30.0		False	False	False	False										GCA_000964425
+18	GCA_002079525.1	1624.0	160944	Ligilactobacillus salivarius											37.0	37.0		False	False	False	False										GCA_002079525
+19	GCA_024453935.1	38303.0	154732	Corynebacterium pseudogenitalium											37.0	37.0	1.0	False	False	False	True			1.0							GCA_024453935
+20	GCA_000092185.1	633148.0	4205	Thermosphaera aggregans	6.5	6.5	6.5	85.0					5.0	7.0	67.0	90.0	0.0	False	True	False	True		1.0								GCA_000092185
+21	GCA_012396615.1	396015.0	7783	Rothia terrae	7.5	7.5	7.5	35.0	0.25	3.5	0.0	7.0	5.0	10.0	15.0	40.0	1.0	False	True	False	True	1.0			1.0						GCA_012396615
+22	GCA_010725485.1	39692.0	8362	Mycobacterium parafortuitum											37.0	37.0		False	False	False	False										GCA_010725485
+23	GCA_001047135.1	709323.0	6865	Fructobacillus tropaeoli	6.0	6.0	6.0	27.5	2.5	2.5	2.5	2.5	4.0	8.0	10.0	45.0	1.0	False	True	False	True			1.0	1.0						GCA_001047135
+24	GCA_007990305.1	306541.0	1358	Halolactibacillus miurensis	9.5	9.5	9.5	38.5		12.75	0.0	25.5	6.0	10.0	5.0	45.0	1.0	True	True	False	True			1.0							GCA_007990305
+25	GCA_000731315.1	399.0	13626	Neorhizobium galegae											25.0	30.0		False	False	False	False										GCA_000731315
+26	GCA_009498735.1	1672701.0	164600	Gracilibacillus oryzae											30.0	30.0		False	False	False	False										GCA_009498735
+27	GCA_028561275.1	1538023.0	168543	Aureisphaera galaxeae														False	False	False	False										GCA_028561275
+28	GCA_023721695.1	1632866.0	169047	Alkalimarinus sediminis														False	False	False	False										GCA_023721695
+29	GCA_009690845.1	2608384.0	166559	Campylobacter portucalensis														False	False	False	False										GCA_009690845
+30	GCA_019249865.1		169535	Prevotella copri											37.0	37.0		False	False	False	False										GCA_019249865
+31	GCA_007858155.1	298.0	12863	Pseudomonas marginalis											25.0	30.0	1.0	False	False	False	True	1.0									GCA_007858155
+32	GCA_000820365.1	654.0	246	Aeromonas ichthiosmia											30.0	30.0		False	False	False	False										GCA_000820365
+33	GCA_014651115.1	68221.0	16183	Streptomyces inusitatus				28.0							28.0	28.0		False	False	False	False										GCA_014651115
+34	GCA_900497695.1	1785161.0	140982	Pseudomonas wadenswilerensis				27.5		3.0	0.0	6.0			4.0	37.0	1.0	False	True	False	True	1.0									GCA_900497695
+35	GCA_002706665.1		1706	Bifidobacterium globosum											37.0	37.0	0.0	False	False	False	True		1.0								GCA_002706665
+36	GCA_007830385.1	1341154.0	139659	Flavobacterium cauense											25.0	25.0		False	False	False	False										GCA_007830385
+37	GCA_001553405.1	1588748.0	166743	Megasphaera hutchinsoni														False	False	False	False										GCA_001553405
+38	GCA_014489575.1	1285901.0	162034	Tessaracoccus defluvii											28.0	28.0		False	False	False	False										GCA_014489575
+39	GCA_000092825.1	640132.0	14050	Segniliparus rotundus				30.5							28.0	37.0	1.0	False	False	False	True	1.0									GCA_000092825
+40	GCA_002250115.1	79880.0	1127	Shouchella clausii											30.0	37.0	1.0	False	False	False	True	1.0									GCA_002250115
+41	GCA_000429105.1	1120946.0	182	Schaalia suimastitidis											37.0	37.0	1.0	False	False	False	True		1.0	1.0	1.0						GCA_000429105
+42	GCA_014873875.1	648752.0	11162	Actinopolymorpha pittospori						1.25	0.0	2.5			28.0	28.0		False	False	False	False										GCA_014873875
+43	GCA_025567495.1	41978.0	132102	Hominimerdicola aceti											37.0	37.0		False	False	False	False										GCA_025567495
+44	GCA_020216525.1		169842	Nocardioides nematodiphilus														False	False	False	False										GCA_020216525
+45	GCA_003574085.1	2026184.0	140693	Meiothermus luteus	7.5	7.0	8.0	60.0	0.25	0.5	0.0	1.0	6.0	9.0	50.0	65.0	1.0	True	True	False	True	1.0									GCA_003574085
+46	GCA_003703395.1	415229.0	17512	Pseudoxanthomonas spadix				29.5	2.0	1.75	0.5	3.0			22.0	37.0	1.0	False	True	False	True	1.0		1.0							GCA_003703395
+47	GCA_003339935.1	84112.0	158979	Eggerthella lenta											37.0	37.0		False	False	False	False										GCA_003339935
+48	GCA_002086255.1	444597.0	8557	Mycobacterium insubricum											37.0	37.0		False	False	False	False										GCA_002086255
+49	GCA_001881565.1	1432052.0	24120	Eisenbergiella tayi											37.0	37.0	0.0	False	False	False	True		1.0								GCA_001881565
+50	GCA_008801835.1	82633.0	2043	Cupriavidus pauculus											30.0	37.0		False	False	False	False										GCA_008801835
+51	GCA_000341125.1	1246460.0	11193	Nocardiopsis lucentensis				28.0							28.0	37.0		False	False	False	False										GCA_000341125
+52	GCA_900455165.1	287.0	135168	Pseudomonas aeruginosa											30.0	30.0		False	False	False	False										GCA_900455165
+53	GCA_025822765.1	319709.0	138449	Mycobacterium barrassiae											30.0	30.0	1.0	False	False	False	True	1.0									GCA_025822765
+54	GCA_000155025.1	499175.0	137139	Clostridioides difficile											37.0	37.0	0.0	False	False	False	True		1.0								GCA_000155025
+55	GCA_004357995.1	2547960.0	164638	Arthrobacter crusticola	7.5	7.0	8.0	27.5	0.0	2.0	0.0	4.0	6.0	9.0	10.0	37.0	1.0	True	True	True	True					1.0					GCA_004357995
+56	GCA_900016645.1		169365	Acididesulfobacillus acetoxydans											30.0	30.0		False	False	False	False										GCA_900016645
+57	GCA_000819805.1	1268237.0	284	Aeromonas diversa											37.0	37.0		False	False	False	False										GCA_000819805
+58	GCA_002499975.1	1858656.0	140746	Alteromonas pelagimontana	6.0	6.0	6.0	35.0	3.5	5.0	0.0	10.0	6.0	10.0	5.0	40.0	1.0	False	False	False	True					1.0					GCA_002499975
+59	GCA_943192995.1		169749	Flintibacter muris											37.0	37.0		False	False	False	False										GCA_943192995
+60	GCA_021172065.1		170079	Pseudocitrobacter corydidari														False	False	False	False										GCA_021172065
+61	GCA_900101925.1	1121894.0	5529	Flavobacterium psychrophilum				17.5	0.0	0.5	0.0	1.0			5.0	23.0	1.0	False	True	True	True	1.0									GCA_900101925
+62	GCA_001046645.1	1132417.0	23271	Sphingobium cupriresistens	6.5	6.5	6.5	28.0	2.5	2.5	2.0	3.0	6.0	7.0	28.0	28.0	1.0	False	False	False	True	1.0									GCA_001046645
+63	GCA_900108245.1	1036778.0	1791	Bosea lathyri											25.0	33.0	1.0	False	False	False	True	1.0									GCA_900108245
+64	GCA_014269285.1	2762756.0	166441	Rufibacter sediminis	7.0	7.0	7.0	28.0	0.0	0.75	0.0	1.5	5.5	10.0	15.0	37.0	1.0	False	False	True	True	1.0									GCA_014269285
+65	GCA_009184905.1	2608632.0	166313	Parvibaculum sedimenti	7.0	7.0	7.0	30.0	0.5	1.25	0.0	2.5	4.0	8.0	10.0	42.0	1.0	False	False	False	True	1.0									GCA_009184905
+66	GCA_000224695.1	13690.0	158033	Sphingobium yanoikuyae											28.0	28.0		False	False	False	False										GCA_000224695
+67	GCA_000372465.1	1122138.0	11081	Kribbella catacumbae	7.0	7.0	7.0	22.666666666666668					5.0	10.0	10.0	30.0	1.0	False	True	False	True	1.0									GCA_000372465
+68	GCA_001598355.1	1219040.0	14223	Sphingomonas asaccharolytica											30.0	30.0		False	False	False	False										GCA_001598355
+69	GCA_900079995.1	1914243.0	133060	Citrobacter europaeus						7.5	0.0	15.0	5.0	10.0	20.0	50.0	1.0	False	False	False	True				1.0						GCA_900079995
+70	GCA_000368205.1	1217641.0	136755	Acinetobacter baumannii											30.0	30.0		False	False	False	False										GCA_000368205
+71	GCA_014648255.1	1841.0	11090	Nocardioides albus				30.0		5.0	5.0	5.0			25.0	37.0	1.0	False	True	False	True	1.0									GCA_014648255
+72	GCA_018156225.1	2006564.0	158815	Carboxylicivirga sediminis	7.25	7.0	7.5	33.0	2.5	5.0	0.0	10.0	6.0	8.5	15.0	42.0	1.0	True	True	True	True	1.0			1.0						GCA_018156225
+73	GCA_002022045.1	1117645.0	132124	Elizabethkingia anophelis subsp. endophytica											28.0	28.0		False	False	False	False										GCA_002022045
+74	GCA_000017865.1	177758.0	17070	Pseudothermotoga lettingae											65.0	65.0	0.0	False	False	False	True		1.0								GCA_000017865
+75	GCA_000176915.1	643562.0	4124	Pseudodesulfovibrio aespoeensis											30.0	30.0	0.0	False	False	False	True		1.0								GCA_000176915
+76	GCA_001313845.1	1305626.0	13386	Pseudonocardia chloroethenivorans					1.5	1.5	0.0	3.0			28.0	28.0	1.0	False	False	False	True	1.0									GCA_001313845
+77	GCA_900114215.1	1520580.0	133137	Streptomyces pini	7.0	7.0	7.0	30.0		4.0	0.0	8.0	5.0	11.0	25.0	45.0	1.0	True	False	False	True	1.0									GCA_900114215
+78	GCA_021134395.1	28039.0	6453	Lactobacillus delbrueckii subsp. lactis											37.0	37.0	1.0	False	False	False	True		1.0	1.0							GCA_021134395
+79	GCA_003860525.1		170169	Epilithonimonas vandammei														False	False	False	False										GCA_003860525
+80	GCA_001315185.1	1298599.0	162331	Vibrio sp.											30.0	30.0		False	False	False	False										GCA_001315185
+81	GCA_016861655.1	2799568.0	167251	Levilactobacillus lanxiensis														False	False	False	False										GCA_016861655
+82	GCA_021462525.1	1330700.0	24641	Thermus caliditerrae											65.0	65.0		False	False	False	False										GCA_021462525
+83	GCA_900106635.1	379347.0	13786	Tritonibacter mobilis subsp. mobilis	7.0	7.0	7.0	27.5	2.0	5.0	0.0	10.0	5.0	11.0	5.0	35.0	1.0	False	True	True	True	1.0									GCA_900106635
+84	GCA_900452415.1	28085.0	6740	Legionella cincinnatiensis											37.0	37.0		False	False	False	False										GCA_900452415
+85	GCA_014651315.1	262005.0	152573	Winogradskyella epiphytica											20.0	30.0	1.0	False	False	False	True	1.0									GCA_014651315
+86	GCA_004354015.1	2547396.0	164618	Arthrobacter terricola											28.0	28.0		False	False	False	False										GCA_004354015
+87	GCA_003550175.1	933063.0	6175	Dichotomicrobium thermohalophilum											43.0	45.0		False	False	False	False										GCA_003550175
+88	GCA_002008165.1	1076926.0	130600	Rhizobium laguerreae											30.0	30.0		False	False	False	False										GCA_002008165
+89	GCA_009755815.1	861534.0	14270	Sphingomonas formosensis	7.0	7.0	7.0	30.0		1.5	0.0	3.0	5.0	9.0	25.0	37.0		False	True	False	False										GCA_009755815
+90	GCA_009711205.1	2006130.0	158752	Paracoccus litorisediminis	7.5	7.0	8.0	30.0	2.0	2.5	0.0	5.0	5.5	8.0	10.0	40.0	1.0	False	False	False	True	1.0	1.0								GCA_009711205
+91	GCA_000576635.1	913326.0	133736	Skermanella stibiiresistens	7.0	7.0	7.0	28.0		2.0	0.0	4.0	5.0	9.0	4.0	37.0	1.0	False	False	False	True	1.0									GCA_000576635
+92	GCA_021018765.1		170041	Pseudomonas fitomaticsae														False	False	False	False										GCA_021018765
+93	GCA_002217285.1	387094.0	5568	Flavobacterium hercynium	7.1	7.1	7.1	23.5	0.5	0.5	0.0	1.0	6.0	8.0	12.0	29.0	1.0	True	True	False	True	1.0									GCA_002217285
+94	GCA_019856255.1	37919.0	11007	Rhodococcus opacus											28.0	28.0		False	False	False	False										GCA_019856255
+95	GCA_003076635.1	2171749.0	169143	Sphingobacterium corticibacter														False	False	False	False										GCA_003076635
+96	GCA_011220525.1	1464.0	159485	Paenibacillus larvae											37.0	37.0		False	False	False	False										GCA_011220525
+97	GCA_009372075.1	1439888.0	132959	Polymorphobacter fuscus											25.0	28.0		False	False	False	False										GCA_009372075
+98	GCA_016907925.1	2029754.0	6128	Herpetosiphon giganteus						3.0	3.0	3.0	6.0	9.0	20.0	37.0	1.0	False	False	False	True	1.0									GCA_016907925
+99	GCA_004355025.1	948102.0	23133	Mycobacterium franklinii											35.0	35.0		False	False	False	False										GCA_004355025

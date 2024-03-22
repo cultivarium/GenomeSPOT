@@ -182,8 +182,9 @@ python3 -m genome_spot.model_training.make_training_dataset -p 7 \
     --genomes-directory ./data/genomes/ \
     -sfna .fna.gz -sfaa .faa.gz \
     --features-directory ./data/training_data/genome_features/ \
-    --downloaded-traits ./data/training_data/bacdive_data.json \
+    --downloaded-traits ./data/training_data/trait_data.tsv \
     --tsv-output ./data/training_data/training_data.tsv
+    python3 -m genome_spot.model_training.make_training_dataset -p 7 \
 ```
 
 

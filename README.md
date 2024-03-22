@@ -58,16 +58,16 @@ Each prediction (e.g. optimum temperature) has:
 Here is the output for the test genome:
 ```
                          value     error is_novel       warning        units
-temperature_optimum  28.810433   5.68601    False          None            C
-temperature_max      37.384123  5.544945    False          None            C
-temperature_min      11.745063  6.781135    False          None            C
-ph_optimum            7.512092  0.900025    False          None           pH
-ph_max                9.547053   1.02375    False          None           pH
-ph_min                5.610827    0.9734    False          None           pH
-salinity_optimum      0.968301  1.470593    False          None   % w/v NaCl
-salinity_max           5.27174  3.464518    False          None   % w/v NaCl
-salinity_min                 0  1.393914    False  min_exceeded   % w/v NaCl
-oxygen                tolerant   0.95858    False          None  probability
+temperature_optimum  22.953768  6.482357    False          None            C
+temperature_max      31.301471  6.199418    False          None            C
+temperature_min       5.645504  6.329401    False          None            C
+ph_optimum            7.070681  0.909382    False          None           pH
+ph_max                8.993682  1.306915    False          None           pH
+ph_min                5.449215  0.923962    False          None           pH
+salinity_optimum      0.200371  1.935106    False          None   % w/v NaCl
+salinity_max          3.119676  2.361246    False          None   % w/v NaCl
+salinity_min                 0  1.182744    False  min_exceeded   % w/v NaCl
+oxygen                tolerant  0.974255    False          None  probability
 ```
 
 

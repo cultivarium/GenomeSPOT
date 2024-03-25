@@ -112,7 +112,7 @@ def load_features_to_dataframe(features_dir: str) -> pd.DataFrame:
         df_features (pd.DataFrame): dataframe with genome features
     """
     sers = []
-    for filename in glob(features_dir + "*.features.json"):
+    for filename in glob(features_dir + "/*.features.json"):
         try:
             ser_genome = load_features_json_to_df(filename)
             sers.append(ser_genome)
@@ -185,7 +185,7 @@ def qc_targets_dataframe(input_df_targets: pd.DataFrame) -> pd.DataFrame:
 
     # Cleanup values and columns
     df_targets = input_df_targets.copy()
-    df_targets["ncbi_accession"] = [acc.split(".")[0] for acc in df_targets["ncbi_accession"]]
+    df_targets["ncbi_accession"] = [acc.split(".")[0] for acc in df_targets.index]
     df_targets = df_targets[~df_targets["ncbi_accession"].isnull()].set_index("ncbi_accession")
     quantitative_vars = [
         col for col in df_targets.columns if any([attr in col for attr in ["_optimum", "_min", "_max"]])
@@ -298,6 +298,9 @@ def parse_args():
     )
 
     args = parser.parse_args()
+    if args.features_directory.endswith("/"):
+        args.features_directory = args.features_directory[:-1]
+
     return args
 
 

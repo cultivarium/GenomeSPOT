@@ -9,8 +9,6 @@ Reference:
 # Quick start
 ## 1. Install package
 
-Requires python version `3.8.16`
-
 Clone the repo, create a virtual environment, then install the package and its requirements:
 ```shell
 git clone https://github.com/cultivarium/GenomeSPOT.git
@@ -133,7 +131,7 @@ done
 
 # How to repeat model training and evaluation
 
-If you are interested in replicating this work, you can use the provided modules and scientific notebooks. Note that the total workflow may involve several days of runtime.
+If you are interested in replicating this work, you can use the provided modules and scientific notebooks. Note that the total workflow may involve several days of runtime. python version `3.8.16` was used for the publication.
 
 ## 1. Download data for training
 
@@ -180,13 +178,13 @@ Measure features from genomes and join them with the target variables to be pred
 Runtime: roughly two hours for ~10-20k genomes.
 
 ```shell
+mkdir ./data/training_data/genome_features/
 python3 -m genome_spot.model_training.make_training_dataset -p 7 \
     --genomes-directory ./data/genomes/ \
     -sfna .fna.gz -sfaa .faa.gz \
     --features-directory ./data/training_data/genome_features/ \
     --downloaded-traits ./data/training_data/trait_data.tsv \
     --tsv-output ./data/training_data/training_data.tsv
-    python3 -m genome_spot.model_training.make_training_dataset -p 7 \
 ```
 
 

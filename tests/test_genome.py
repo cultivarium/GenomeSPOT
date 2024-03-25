@@ -136,12 +136,12 @@ class TestGenome:
         }
 
         # check keys are correct
-        assert list(genome_features.keys()) == expected_keys
-        assert list(genome_features["all"].keys()) == expected_features
+        assert sorted(genome_features.keys()) == sorted(expected_keys)
+        assert sorted(genome_features["all"].keys()) == sorted(expected_features)
 
         # check proteins are found for all localizations
         for genome_statistics in genome_features.values():
             assert abs(genome_statistics["total_proteins"]) > 400
 
         # check values are calculated consistently
-        assert genome_features["all"] == pytest.approx(expected_values_all)
+        assert dict(sorted(genome_features["all"].items())) == pytest.approx(dict(sorted(expected_values_all.items())))

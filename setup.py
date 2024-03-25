@@ -17,7 +17,7 @@ setup(
     license="MIT License",
     package_data={"genome_spot": ["bioinformatics/hmm/hmm_signal_peptide.joblib"]},
     packages=find_packages(exclude=["tests"]),
-    scripts=["genome_spot/"],
+    scripts=["genome_spot/genome_spot.py"],
     python_requires="==3.8.16",
     install_requires=[
         "biopython>=1.83",

@@ -9,8 +9,6 @@ Reference:
 # Quick start
 ## 1. Install package
 
-Requires python version `3.8.16`
-
 Clone the repo, create a virtual environment, then install the package and its requirements:
 ```shell
 git clone https://github.com/cultivarium/GenomeSPOT.git
@@ -187,7 +185,6 @@ python3 -m genome_spot.model_training.make_training_dataset -p 7 \
     --features-directory ./data/training_data/genome_features/ \
     --downloaded-traits ./data/training_data/trait_data.tsv \
     --tsv-output ./data/training_data/training_data.tsv
-    python3 -m genome_spot.model_training.make_training_dataset -p 7 \
 ```
 
 

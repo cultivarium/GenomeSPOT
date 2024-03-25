@@ -9,6 +9,8 @@ Reference:
 # Quick start
 ## 1. Install package
 
+Requires python version `3.8.16`
+
 Clone the repo, create a virtual environment, then install the package and its requirements:
 ```shell
 git clone https://github.com/cultivarium/GenomeSPOT.git

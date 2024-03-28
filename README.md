@@ -1,6 +1,13 @@
 # GenomeSPOT: <u>G</u>enome-based <u>S</u>alinity, <u>p</u>H, <u>O</u>xygen Tolerance, and <u>T</u>emperature for Bacteria and Archaea
 
-Predicts oxygen tolerance (obligate/facultative aerobe vs. obligate anaerobe) and optimum, min, and max temperature (C), salinity (% w/v NaCl), and pH for bacterial and archaeal genomes using statistical models trained on data for phylogenetically diverse microbial isolates.
+Uses statistical models trained on data for phylogenetically diverse bacterial and archaeal isolates to predict:
+
+| Condition  | Units |
+| ------------- | ------------- |
+| Oxygen  | "Tolerant" or "Not tolerant", classification and probability  |
+| Temperature  | Optimum, minimum, and maximum in Celsius |
+| Salinity  | Optimum, minimum, and maximum in % w/v NaCl |
+| pH  | Optimum, minimum, and maximum in units pH |
 
 Reference:
 > Predicting microbial growth conditions from amino acid composition. Tyler P. Barnum, Alexander Crits-Christoph, Michael Molla, Paul Carini, Henry H. Lee, Nili Ostrov. bioRxiv 2024.03.22.586313; doi: https://doi.org/10.1101/2024.03.22.586313

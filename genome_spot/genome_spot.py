@@ -249,7 +249,7 @@ class GenomeSPOT:
             y_pred = "tolerant"
             error = y_pred_prob
         else:
-            y_pred = "not intolerant"
+            y_pred = "not tolerant"
             error = 1 - y_pred_prob
         return y_pred, error
 

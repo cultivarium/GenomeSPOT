@@ -54,7 +54,10 @@ def process_measure_genome_features(inputs: Tuple[int, str, str, str]):
     except:
         genome_features = {}
     save_results(
-        predictions=None, genome_features=genome_features, output_prefix=output_prefix, save_genome_features=True
+        predictions=None,
+        genome_features=genome_features,
+        output_prefix=output_prefix,
+        save_genome_features=True,
     )
     if n % 1000 == 0:
         logger.info("%i features calculated", n)
@@ -62,7 +65,11 @@ def process_measure_genome_features(inputs: Tuple[int, str, str, str]):
 
 
 def pool_measure_genome_features(
-    directory: str, suffix_fna: str, suffix_faa: str, output_dir: str, processes: Union[int, None]
+    directory: str,
+    suffix_fna: str,
+    suffix_faa: str,
+    output_dir: str,
+    processes: Union[int, None],
 ) -> list:
     """Use multiprocessing to measure genome features in parallel.
 
@@ -139,7 +146,9 @@ def load_features_json_to_df(filename: str) -> pd.DataFrame:
         accession = filename.split("/")[-1].split(".")[0]
         ser.name = accession
         index_tuples = list(zip([col] * len(ser), ser.index.tolist()))
-        index = pd.MultiIndex.from_tuples(index_tuples, names=["localization", "variable"])
+        index = pd.MultiIndex.from_tuples(
+            index_tuples, names=["localization", "variable"]
+        )
         ser.index = index
         sers.append(ser)
 
@@ -170,9 +179,15 @@ def qc_features_dataframe(
     and, optionally, genomes in a preset list defined in the script.
     """
     df_features = input_df_features.copy()
-    below_coding_density_filter = df_features["all_protein_coding_density"] < min_coding_density
-    above_coding_density_filter = df_features["all_protein_coding_density"] > max_coding_density
-    genomes_to_drop = df_features[below_coding_density_filter | above_coding_density_filter].index.tolist()
+    below_coding_density_filter = (
+        df_features["all_protein_coding_density"] < min_coding_density
+    )
+    above_coding_density_filter = (
+        df_features["all_protein_coding_density"] > max_coding_density
+    )
+    genomes_to_drop = df_features[
+        below_coding_density_filter | above_coding_density_filter
+    ].index.tolist()
     if use_preset_to_ignore_genomes:
         genomes_to_drop += IGNORE_GENOMES
     genomes_to_drop = list(set(genomes_to_drop).intersection(df_features.index))
@@ -185,18 +200,28 @@ def qc_targets_dataframe(input_df_targets: pd.DataFrame) -> pd.DataFrame:
 
     # Cleanup values and columns
     df_targets = input_df_targets.copy()
-    df_targets["ncbi_accession"] = [acc.split(".")[0] for acc in df_targets["ncbi_accession"]]
-    df_targets = df_targets[~df_targets["ncbi_accession"].isnull()].set_index("ncbi_accession")
-    quantitative_vars = [
-        col for col in df_targets.columns if any([attr in col for attr in ["_optimum", "_min", "_max"]])
+    df_targets["ncbi_accession"] = [
+        acc.split(".")[0] for acc in df_targets["ncbi_accession"]
     ]
-    df_targets.loc[:, quantitative_vars] = df_targets.loc[:, quantitative_vars].astype(float)
+    df_targets = df_targets[~df_targets["ncbi_accession"].isnull()].set_index(
+        "ncbi_accession"
+    )
+    quantitative_vars = [
+        col
+        for col in df_targets.columns
+        if any([attr in col for attr in ["_optimum", "_min", "_max"]])
+    ]
+    df_targets.loc[:, quantitative_vars] = df_targets.loc[:, quantitative_vars].astype(
+        float
+    )
     df_targets = df_targets.rename(columns={"species": "ncbi_species"})
 
     # Add taxonomy
     taxonomy = TaxonomyGTDB()
     for taxlevel, index in taxonomy.indices.items():
-        df_targets[taxlevel] = df_targets.index.map({k: v[index] for k, v in taxonomy.taxonomy_dict.items()})
+        df_targets[taxlevel] = df_targets.index.map(
+            {k: v[index] for k, v in taxonomy.taxonomy_dict.items()}
+        )
 
     return df_targets
 
@@ -246,7 +271,9 @@ def make_training_dataset(
     """
     # Measure genome features in parallel
     if skip_measure_features is False:
-        pool_measure_genome_features(genomes_dir, suffix_fna, suffix_faa, output_features_dir, processes)
+        pool_measure_genome_features(
+            genomes_dir, suffix_fna, suffix_faa, output_features_dir, processes
+        )
 
     # Join features with downloaded trait data
     df = make_training_df(output_features_dir, downloaded_traits)
@@ -259,8 +286,12 @@ def parse_args():
         description="Make holdout sets for model training",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("-sfaa", required=True, help="Suffix of protein FASTA files, default .faa.gz")
-    parser.add_argument("-sfna", required=True, help="Suffix of genome FASTA files, default .fna.gz")
+    parser.add_argument(
+        "-sfaa", required=True, help="Suffix of protein FASTA files, default .faa.gz"
+    )
+    parser.add_argument(
+        "-sfna", required=True, help="Suffix of genome FASTA files, default .fna.gz"
+    )
     parser.add_argument(
         "-d",
         "--genomes-directory",
@@ -287,7 +318,13 @@ def parse_args():
         help="Path to write the training data TSV file",
     )
 
-    parser.add_argument("-p", "--processes", help="Number of parallel processes (default=4)", default=4, required=False)
+    parser.add_argument(
+        "-p",
+        "--processes",
+        help="Number of parallel processes (default=4)",
+        default=4,
+        required=False,
+    )
 
     parser.add_argument(
         "--skip-measure-features",

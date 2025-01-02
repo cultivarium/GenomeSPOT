@@ -24,7 +24,11 @@ from .bioinformatics.genome import (
 )
 
 
-logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 
 
 class GenomeSPOT:
@@ -64,7 +68,12 @@ class GenomeSPOT:
         "oxygen": (0, 1),
     }
 
-    UNITS = {"temperature": "C", "ph": "pH", "salinity": "% w/v NaCl", "oxygen": "probability"}
+    UNITS = {
+        "temperature": "C",
+        "ph": "pH",
+        "salinity": "% w/v NaCl",
+        "oxygen": "probability",
+    }
 
     def __init__(self):
         pass
@@ -102,7 +111,11 @@ class GenomeSPOT:
                     model = joblib.load(f"{path_to_models}/{target}.joblib")
                     error_model = joblib.load(f"{path_to_models}/error_{target}.joblib")
                     predictions[target] = self.predict_target_value(
-                        target=target, X=X, model=model, error_model=error_model, novelty_model=novelty_model
+                        target=target,
+                        X=X,
+                        model=model,
+                        error_model=error_model,
+                        novelty_model=novelty_model,
                     )
             elif condition == "oxygen":
                 target = condition
@@ -132,7 +145,9 @@ class GenomeSPOT:
             instructions = json.loads(fh.read())
         return instructions
 
-    def genome_features_to_input_arr(self, features: list, genome_features: dict) -> np.ndarray:
+    def genome_features_to_input_arr(
+        self, features: list, genome_features: dict
+    ) -> np.ndarray:
         """Creates an array that can be used as input for predictions.
 
         Genome features are recorded in a nested dictionary of
@@ -151,11 +166,19 @@ class GenomeSPOT:
             for localization, feat_dict in sorted(genome_features.items())
             for feat, value in sorted(feat_dict.items())
         }
-        X = np.array([flat_genome_features.get(x, np.nan) for x in features]).reshape(1, -1)
+        X = np.array([flat_genome_features.get(x, np.nan) for x in features]).reshape(
+            1, -1
+        )
         return X
 
     def predict_target_value(
-        self, X: np.ndarray, model, target: str, method: str = "predict", error_model=None, novelty_model=None
+        self,
+        X: np.ndarray,
+        model,
+        target: str,
+        method: str = "predict",
+        error_model=None,
+        novelty_model=None,
     ) -> Dict[str, float]:
         """Predicts a value and confidence intervals.
 
@@ -168,7 +191,9 @@ class GenomeSPOT:
             prediction_dict: Dict containing the predicted value and upper and lower limit
                 of confidence intervals
         """
-        condition = target.replace("_optimum", "").replace("_min", "").replace("_max", "")
+        condition = (
+            target.replace("_optimum", "").replace("_min", "").replace("_max", "")
+        )
         y_pred = None
         units = self.UNITS[condition]
         error = None
@@ -220,7 +245,9 @@ class GenomeSPOT:
         is_novel = False if novelty_model.predict(X) == 1 else True
         return is_novel
 
-    def check_prediction_range(self, y_pred: float, target: str) -> Tuple[float, Union[str, None]]:
+    def check_prediction_range(
+        self, y_pred: float, target: str
+    ) -> Tuple[float, Union[str, None]]:
         """If the prediction is above or below the bounds set in this
         script, a warning flag is added to the output and the value is
         set to either the max or min, whichever was exceeded.
@@ -296,7 +323,9 @@ def run_genome_spot(
         logging.info("Predicting growth conditions")
         predictions = GenomeSPOT().predict_from_genome(genome_features, path_to_models)
     else:
-        logging.info("Skipping prediction of growth conditions as `run_prediction` was set to False ")
+        logging.info(
+            "Skipping prediction of growth conditions as `run_prediction` was set to False "
+        )
         predictions = {}
 
     return predictions, genome_features
@@ -323,7 +352,9 @@ def save_results(
 
 
 def parse_args():
-    parser = ArgumentParser(prog="MeasureGenome", description="Measure and predict properties from a genome")
+    parser = ArgumentParser(
+        prog="MeasureGenome", description="Measure and predict properties from a genome"
+    )
 
     parser.add_argument(
         "-c",

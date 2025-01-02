@@ -38,52 +38,79 @@ STANDARD_AMINO_ACIDS = {
     "Y",
 }
 
-# citation:
-NH2O_RQEC = {
-    "A": 0.369,
-    "C": -0.025,
-    "D": -0.122,
-    "E": -0.107,
-    "F": -2.568,
-    "G": 0.478,
-    "H": -1.825,
-    "I": 0.660,
-    "K": 0.763,
-    "L": 0.660,
-    "M": 0.046,
-    "N": -0.122,
-    "P": -0.354,
-    "Q": -0.107,
-    "R": 0.072,
-    "S": 0.575,
-    "T": 0.569,
-    "V": 0.522,
-    "W": -4.087,
-    "Y": -2.499,
+# Dick et al. (2020)
+# nH2O of the amino acid monomer minus one to get the amino acid residue
+NH2O_QEC = {
+    "A": 0.6 - 1,
+    "C": 0.0 - 1,
+    "D": -0.2 - 1,
+    "E": 0.0 - 1,
+    "F": -2.2 - 1,
+    "G": 0.4 - 1,
+    "H": -1.8 - 1,
+    "I": 1.2 - 1,
+    "K": 1.2 - 1,
+    "L": 1.2 - 1,
+    "M": 0.4 - 1,
+    "N": -0.2 - 1,
+    "P": 0.0 - 1,
+    "Q": 0.0 - 1,
+    "R": 0.2 - 1,
+    "S": 0.6 - 1,
+    "T": 0.8 - 1,
+    "V": 1.0 - 1,
+    "W": -3.8 - 1,
+    "Y": -2.2 - 1,
 }
 
-# citation:
+# Dick et al. 2020
+# Zc multiplied by the number of carbons of each amino acid
 WEIGHTED_ZC = {
     "A": 0,
-    "C": 2.0,
+    "C": 2,
     "D": 4,
-    "E": 2.0,
-    "F": -4.0,
+    "E": 2,
+    "F": -4,
     "G": 2,
-    "H": 4.0,
+    "H": 4,
     "I": -6,
-    "K": 4.0,
+    "K": -4,
     "L": -6,
-    "M": -1.6,
+    "M": -2,
     "N": 4,
-    "P": -2.0,
-    "Q": 2.0,
-    "R": 2.0,
-    "S": 1.98,
+    "P": -2,
+    "Q": 2,
+    "R": 2,
+    "S": 2,
     "T": 0,
-    "V": -4.0,
-    "W": -2.0,
-    "Y": -2.0,
+    "V": -4,
+    "W": -2,
+    "Y": -2,
+}
+
+# Dick et al. 2020
+# Number of carbons in each amino acid
+CARBON_NUMBER = {
+    "A": 3,
+    "C": 3,
+    "D": 4,
+    "E": 5,
+    "F": 9,
+    "G": 2,
+    "H": 6,
+    "I": 6,
+    "K": 6,
+    "L": 6,
+    "M": 5,
+    "N": 4,
+    "P": 5,
+    "Q": 5,
+    "R": 6,
+    "S": 3,
+    "T": 4,
+    "V": 5,
+    "W": 11,
+    "Y": 9,
 }
 
 # Kyte & Doolittle 1982
@@ -201,7 +228,8 @@ class Protein:
         protein based on a dictionary of amino acids.
         """
         if self.length > 0:
-            return sum([WEIGHTED_ZC[s] for s in self.sequence[self.start_pos :]]) / self.length
+            seq = self.sequence[self.start_pos :]
+            return sum([WEIGHTED_ZC[s] for s in seq]) / sum([CARBON_NUMBER[s] for s in seq])
         else:
             return np.nan
 
@@ -210,7 +238,7 @@ class Protein:
         protein based on a dictionary of amino acids.
         """
         if self.length > 0:
-            return sum([NH2O_RQEC[s] for s in self.sequence[self.start_pos :]]) / self.length
+            return sum([NH2O_QEC[s] for s in self.sequence[self.start_pos :]]) / self.length
         else:
             return np.nan
 

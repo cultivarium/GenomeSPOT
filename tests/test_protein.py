@@ -1,4 +1,5 @@
 # pylint: disable=missing-docstring
+import numpy as np
 import pytest
 from genome_spot.bioinformatics.protein import Protein
 
@@ -62,3 +63,20 @@ class TestProtein:
         }
 
         assert protein.protein_metrics() == pytest.approx(expected_values)
+
+    # Contig-edge gene fragments whose predicted signal peptide spans the whole
+    # sequence. Before the fix these gave length 0 and NaN metrics, which made
+    # the genome-wide mean GRAVY NaN and removed all membrane proteins.
+    @pytest.mark.parametrize(
+        "sequence",
+        [
+            # GCA_034666125.1, protein JAXDML010000009.1_1 (Prodigal)
+            "MTKANTQVIAKVAAVLAGAGLVLSSFAIALPAGAQTTTTTTTTSSSVTFA",
+            # GCA_905216175.1, protein CAJMSV010000096.1_1 (Prodigal)
+            "MRAFDFEMSRRGFASALAAGALSLALAGCGGGAAGTGSDEGSSAGGEATA",
+        ],
+    )
+    def test_signal_peptide_spanning_whole_protein(self, sequence):
+        metrics = Protein(sequence).protein_metrics()
+        assert metrics["length"] > 0
+        assert not np.isnan(metrics["gravy"])

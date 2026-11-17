@@ -260,8 +260,12 @@ class Protein:
         ) = self.signal_peptide_model.predict_signal_peptide(self.sequence)
         if self.remove_signal_peptide is True:
             self.start_pos = signal_end_index + 1
-            # signal peptide should not be entire length
-            if self.start_pos > self.length:
+            # signal peptide should not be entire length. Must be >=: when the
+            # predicted cut site is the last residue, start_pos == length and the
+            # mature protein would be empty, giving NaN metrics. Seen in short
+            # contig-edge gene fragments, e.g. JAXDML010000009.1_1 in
+            # GCA_034666125.1 and CAJMSV010000096.1_1 in GCA_905216175.1
+            if self.start_pos >= self.length:
                 self.start_pos = 1
         self.length = len(self.sequence[self.start_pos :])
 

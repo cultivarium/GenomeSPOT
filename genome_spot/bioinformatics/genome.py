@@ -163,7 +163,11 @@ class Genome:
         """
 
         if self._protein_localization is None:
-            mean_hydrophobicity = np.mean(
+            # nanmean: one protein with undefined GRAVY (NaN) must not make the
+            # genome-wide mean NaN, which would leave no protein classified as
+            # membrane and the genome without temperature/pH/salinity predictions
+            # (e.g. GCA_034666125.1 and GCA_905216175.1)
+            mean_hydrophobicity = np.nanmean(
                 [v["gravy"] for k, v in self.protein_data().items() if v["gravy"] is not None]
             )
 

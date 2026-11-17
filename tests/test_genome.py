@@ -1,6 +1,7 @@
 # pylint: disable=missing-docstring
 from pathlib import Path
 
+import numpy as np
 import pytest
 from genome_spot.bioinformatics.genome import Genome
 
@@ -145,3 +146,22 @@ class TestGenome:
 
         # check values are calculated consistently
         assert dict(sorted(genome_features["all"].items())) == pytest.approx(dict(sorted(expected_values_all.items())))
+
+    def test_assign_localization_ignores_undefined_gravy(self):
+        """One protein with NaN GRAVY must not stop membrane proteins being found.
+
+        Observed in GCA_034666125.1 and GCA_905216175.1, where a single protein
+        with undefined GRAVY left zero membrane proteins genome-wide.
+        """
+        genome_calc = Genome(
+            contig_filepath=CONTIG_FASTA,
+            protein_filepath=PROTEIN_FASTA,
+        )
+        n_membrane_expected = sum(1 for v in genome_calc.assign_localization().values() if v == "membrane")
+        assert n_membrane_expected > 400
+
+        genome_calc._protein_localization = None
+        first_protein = next(iter(genome_calc.protein_data()))
+        genome_calc.protein_data()[first_protein]["gravy"] = np.nan
+        n_membrane = sum(1 for v in genome_calc.assign_localization().values() if v == "membrane")
+        assert abs(n_membrane - n_membrane_expected) <= 1

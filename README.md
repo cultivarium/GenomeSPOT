@@ -13,6 +13,18 @@ Reference:
 > Predicting microbial growth conditions from amino acid composition. Tyler P. Barnum, Alexander Crits-Christoph, Michael Molla, Paul Carini, Henry H. Lee, Nili Ostrov. bioRxiv 2024.03.22.586313; doi: https://doi.org/10.1101/2024.03.22.586313
 
 
+# Precomputed predictions
+
+You may not need to run GenomeSPOT yourself. Predictions for GTDB species representatives are available to download:
+
+| Added | GTDB release | Genomes | Download |
+| ------------- | ------------- | ------------- | ------------- |
+| 2026-11-17 | r232 | 199,923 | [GitHub release](https://github.com/cultivarium/GenomeSPOT/releases/tag/gtdb-r232-predictions), [Zenodo](https://doi.org/10.5281/zenodo.24299343) |
+| 2024-03-22 | r214 | 85,205 | Supplementary Data 4 of the [preprint](https://doi.org/10.1101/2024.03.22.586313) |
+
+The r232 release includes the predictions, the features the models use, and a README that describes the columns and known limitations. Each genome has a trust flag: predictions for genomes smaller than about 1 Mbp are unreliable.
+
+
 # Quick start
 ## 1. Install package
 
